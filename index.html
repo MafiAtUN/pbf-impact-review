@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>PBF Impact Statements — Pilot Batch 01</title>
+<style>
+:root {
+  --bg:#f4f3ef; --paper:#fff; --ink:#1c1c19; --muted:#6a6a62; --line:#e0dfd8;
+  --accent:#2f5d50; --accent-soft:#e9f0ec; --warn:#8a4b12; --warn-soft:#fbefe1;
+  --ctx:#E97132; --chal:#699331; --chg:#7030A0; --who:#C00000; --ev:#00B050;
+  --shadow:0 1px 2px rgba(0,0,0,.05), 0 8px 24px rgba(0,0,0,.05);
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:var(--bg); color:var(--ink);
+  font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  -webkit-text-size-adjust:100%; }
+h1,h2,h3,h4 { letter-spacing:-.01em; }
+a { color:var(--accent); }
+
+/* ---------- gate ---------- */
+#gate { min-height:100vh; display:grid; place-items:center; padding:24px; }
+.card { background:var(--paper); border:1px solid var(--line); border-radius:12px;
+  box-shadow:var(--shadow); padding:30px; max-width:440px; width:100%; }
+.card h1 { font-size:20px; margin:0 0 6px; }
+.card p { color:var(--muted); font-size:14px; margin:0 0 18px; }
+.keyrow { display:flex; gap:8px; }
+input[type=text], input[type=password], textarea, select {
+  font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:8px;
+  background:var(--paper); color:var(--ink); width:100%; }
+#key { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.14em;
+  text-transform:uppercase; }
+textarea { min-height:90px; resize:vertical; line-height:1.5; }
+button { font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--line);
+  background:var(--paper); color:var(--ink); padding:10px 16px; }
+button.primary { background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600; }
+button.primary:disabled { opacity:.5; cursor:default; }
+button:hover:not(:disabled) { filter:brightness(1.06); }
+.err { color:var(--who); font-size:14px; margin-top:12px; min-height:20px; }
+
+/* ---------- shell ---------- */
+#app { display:none; }
+header.bar { position:sticky; top:0; z-index:20; background:rgba(255,255,255,.92);
+  backdrop-filter:saturate(1.4) blur(8px); border-bottom:1px solid var(--line); }
+.bar-in { max-width:1180px; margin:0 auto; padding:10px 20px; display:flex; gap:14px;
+  align-items:center; flex-wrap:wrap; }
+.bar h1 { font-size:15px; margin:0; flex:1 1 auto; }
+.bar h1 small { display:block; font-weight:400; color:var(--muted); font-size:12px; }
+.save { font-size:12px; color:var(--muted); white-space:nowrap; }
+.save.on { color:var(--accent); }
+main { max-width:1180px; margin:0 auto; padding:0 20px 80px;
+  display:grid; grid-template-columns:210px 1fr; gap:34px; align-items:start; }
+nav.rail { position:sticky; top:64px; padding-top:26px; font-size:14px; }
+nav.rail a { display:block; padding:5px 0; color:var(--muted); text-decoration:none;
+  border-left:2px solid transparent; padding-left:10px; }
+nav.rail a:hover { color:var(--ink); }
+nav.rail a.on { color:var(--ink); border-left-color:var(--accent); font-weight:600; }
+nav.rail .done { color:var(--accent); }
+@media (max-width:860px) {
+  main { grid-template-columns:1fr; gap:0; }
+  nav.rail { display:none; }
+}
+section.blk { background:var(--paper); border:1px solid var(--line); border-radius:12px;
+  padding:26px 30px; margin:26px 0; box-shadow:var(--shadow); scroll-margin-top:70px; }
+section.blk > h2 { font-size:19px; margin:0 0 4px; }
+.eyebrow { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+  font-weight:650; margin-bottom:10px; }
+
+/* ---------- statement ---------- */
+.stmt-head { font-size:21px; line-height:1.3; margin:14px 0 12px; }
+.stmt-body { font-size:17px; line-height:1.72; }
+.colours .ctx  { color:var(--ctx); }
+.colours .chal { color:var(--chal); }
+.colours .chg  { color:var(--chg); }
+.colours .who  { color:var(--who); }
+.colours .ev   { color:var(--ev); }
+.legend { display:flex; flex-wrap:wrap; gap:12px; font-size:12.5px; color:var(--muted);
+  margin:14px 0 0; }
+.legend span::before { content:"■ "; }
+.legend .ctx::before{color:var(--ctx)} .legend .chal::before{color:var(--chal)}
+.legend .chg::before{color:var(--chg)} .legend .who::before{color:var(--who)}
+.legend .ev::before{color:var(--ev)}
+.meta { font-size:13px; color:var(--muted); }
+details { margin-top:16px; border-top:1px solid var(--line); padding-top:12px; }
+summary { cursor:pointer; font-size:14px; color:var(--accent); font-weight:600; }
+details[open] summary { margin-bottom:8px; }
+.prose { font-size:14.5px; }
+.prose table { border-collapse:collapse; width:100%; margin:10px 0; font-size:13px; }
+.prose th, .prose td { border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top; }
+.prose th { background:var(--accent-soft); color:var(--accent); }
+.prose blockquote { margin:10px 0; padding:8px 14px; border-left:3px solid var(--line); color:var(--muted); }
+.prose code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px;
+  background:var(--accent-soft); padding:1px 5px; border-radius:4px; word-break:break-word; }
+.prose h2 { font-size:18px; } .prose h3 { font-size:16px; }
+.tw { overflow-x:auto; }
+
+/* ---------- feedback ---------- */
+.fb { margin-top:20px; border-top:2px solid var(--accent-soft); padding-top:16px; }
+.fb-label { font-size:13px; font-weight:650; margin:14px 0 6px; display:block; }
+.verdicts { display:flex; flex-wrap:wrap; gap:8px; }
+.verdicts label { border:1px solid var(--line); border-radius:999px; padding:7px 14px;
+  font-size:13.5px; cursor:pointer; background:var(--bg); }
+.verdicts input { position:absolute; opacity:0; width:0; }
+.verdicts label:has(input:checked) { background:var(--accent); border-color:var(--accent);
+  color:#fff; font-weight:600; }
+.q { border-top:1px solid var(--line); padding:16px 0 4px; }
+.q:first-of-type { border-top:0; }
+.q h3 { font-size:15px; margin:0 0 4px; }
+.q .qtext { font-size:14px; color:var(--muted); margin:0 0 10px; }
+.submitbar { position:sticky; bottom:0; background:rgba(255,255,255,.94);
+  backdrop-filter:blur(8px); border-top:1px solid var(--line); padding:12px 0; margin-top:8px;
+  display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.note { font-size:13px; color:var(--muted); }
+.ok { color:var(--accent); font-weight:600; }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="card">
+    <h1>PBF Impact Statements — Pilot Batch 01</h1>
+    <p>Five draft impact statements for PBSO's Impact Hub. Enter the access key you were
+       sent to open them. The documents are encrypted; the key is checked in your browser
+       and never sent anywhere.</p>
+    <form class="keyrow" id="gateform">
+      <input type="text" id="key" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off"
+             spellcheck="false" autofocus>
+      <button class="primary" id="unlock" type="submit">Open</button>
+    </form>
+    <div class="err" id="err"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header class="bar">
+    <div class="bar-in">
+      <h1>PBF Impact Statements — Pilot Batch 01
+        <small id="builtline"></small></h1>
+      <input type="text" id="reviewer" placeholder="Your name" style="width:150px" autocomplete="name">
+      <span class="save" id="save">saved in this browser</span>
+      <button id="tocolour" title="Toggle the five-element colour coding">Colours: on</button>
+    </div>
+  </header>
+  <main>
+    <nav class="rail" id="rail"></nav>
+    <div id="content"></div>
+  </main>
+</div>
+
+<script src="firebase-config.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => (s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const STORE = 'pbf-review-pilot-01';
+let DATA = null, FEEDBACK = load(), colours = true;
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch { return {}; }
+}
+function save() {
+  FEEDBACK.updatedAt = new Date().toISOString();
+  localStorage.setItem(STORE, JSON.stringify(FEEDBACK));
+  const el = $('#save');
+  el.textContent = 'saved ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  el.classList.add('on');
+  paintRail();
+}
+
+/* ---------------- unlock ---------------- */
+$('#gateform').onsubmit = async e => {
+  e.preventDefault();
+  const raw = $('#key').value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  if (!raw) return;
+  $('#unlock').disabled = true;
+  $('#err').textContent = 'Opening…';
+  try {
+    DATA = await decrypt(raw);
+    sessionStorage.setItem(STORE + ':key', raw);
+    start();
+  } catch (err) {
+    $('#err').textContent = 'That key did not open the documents. Check for a typo — ' +
+      'the dashes do not matter.';
+    $('#unlock').disabled = false;
+  }
+};
+
+async function decrypt(pass) {
+  const blob = await (await fetch('payload.enc.json', {cache:'no-store'})).json();
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass),
+    'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt:b64(blob.kdf.salt), iterations:blob.kdf.iter, hash:'SHA-256'},
+    base, {name:'AES-GCM', length:256}, false, ['decrypt']);
+  const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(blob.iv)}, key, b64(blob.ct));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+/* ---------------- render ---------------- */
+function segHTML(segments) {
+  return segments.map(([tag, text]) =>
+    tag ? `<span class="${tag}">${esc(text)}</span>` : esc(text)).join('');
+}
+
+const VERDICTS = ['Approve as drafted', 'Approve with edits', 'Needs rework', 'Cannot judge yet'];
+
+function statementBlock(s, i) {
+  const fb = FEEDBACK[s.key] || {};
+  return `<section class="blk" id="s-${s.key}">
+    <div class="eyebrow">Statement ${i+1} of ${DATA.statements.length} · ${esc(s.id)}</div>
+    <h2>${esc(s.country)}</h2>
+    <div class="stmt-head">${esc(s.heading)}</div>
+    <div class="stmt-body colours-target">${segHTML(s.segments)}</div>
+    <div class="legend">
+      <span class="ctx">Context</span><span class="chal">Peacebuilding challenge</span>
+      <span class="chg">What changed</span><span class="who">For whom</span>
+      <span class="ev">Evidence</span>
+      <span style="color:var(--muted)">· ${s.words} words</span>
+    </div>
+    <div class="meta" style="margin-top:14px"><strong>Source:</strong> ${s.sources.map(esc).join('<br>')}</div>
+    <details><summary>Where every fact comes from — page-by-page trace</summary>
+      <div class="prose">${s.traceHtml}</div></details>
+    ${s.notesHtml ? `<details><summary>Judgement calls I would like your view on</summary>
+      <div class="prose">${s.notesHtml}</div></details>` : ''}
+    <div class="fb">
+      <span class="fb-label">Your verdict</span>
+      <div class="verdicts">${VERDICTS.map(v => `<label><input type="radio" name="v-${s.key}"
+        value="${esc(v)}" ${fb.verdict===v?'checked':''}
+        onchange="setField('${s.key}','verdict',this.value)">${esc(v)}</label>`).join('')}</div>
+      <label class="fb-label" for="h-${s.key}">A better heading, if you have one</label>
+      <input type="text" id="h-${s.key}" value="${esc(fb.heading||'')}"
+        placeholder="AP/news-bulletin style — change + number + place"
+        oninput="setField('${s.key}','heading',this.value)">
+      <label class="fb-label" for="c-${s.key}">Comments — anything to change, cut, or check</label>
+      <textarea id="c-${s.key}" placeholder="Quote the wording you mean, if it helps."
+        oninput="setField('${s.key}','comment',this.value)">${esc(fb.comment||'')}</textarea>
+    </div>
+  </section>`;
+}
+
+function questionsBlock() {
+  const fb = FEEDBACK.questions || {};
+  return `<section class="blk" id="s-questions">
+    <div class="eyebrow">Your answers unblock the next 128 projects</div>
+    <h2>Ten open questions</h2>
+    <p class="note">These came out of reading the guidance against the 993 source files.
+      Answer what you can — anything you skip, I will assume and flag.</p>
+    ${DATA.questions.map(q => `<div class="q">
+      <h3>${q.n}. ${q.title}</h3>
+      <p class="qtext">${q.html}</p>
+      <textarea placeholder="Your answer" oninput="setQ('${q.n}',this.value)">${esc(fb[q.n]||'')}</textarea>
+    </div>`).join('')}
+  </section>`;
+}
+
+function submitBlock() {
+  const live = window.FB && FB.apiKey && FB.projectId;
+  return `<section class="blk" id="s-submit">
+    <h2>Send it back</h2>
+    <p class="note">${live
+      ? 'This goes straight to the drafting team. Nothing is published anywhere public.'
+      : 'Feedback delivery is not wired up yet — use Download, and email me the file.'}</p>
+    <label class="fb-label" for="general">Anything else — on the format, the batch, or what to do next</label>
+    <textarea id="general" oninput="FEEDBACK.general=this.value; save()">${esc(FEEDBACK.general||'')}</textarea>
+    <div class="submitbar">
+      ${live ? '<button class="primary" id="send">Submit feedback</button>' : ''}
+      <button id="dl">Download a copy</button>
+      <span class="note" id="sendmsg">Your answers save in this browser as you type.</span>
+    </div>
+  </section>`;
+}
+
+function start() {
+  $('#gate').style.display = 'none';
+  $('#app').style.display = 'block';
+  $('#builtline').textContent = `${DATA.statements.length} statements · drafted ${DATA.built}`;
+  $('#reviewer').value = FEEDBACK.reviewer || '';
+  $('#reviewer').oninput = e => { FEEDBACK.reviewer = e.target.value; save(); };
+
+  $('#content').innerHTML = `
+    <section class="blk" id="s-intro">
+      <h2>What you are looking at</h2>
+      <div class="prose">${DATA.introHtml}</div>
+      ${DATA.docx ? `<p style="margin-top:16px"><button id="docx">Download the Word version</button>
+        <span class="note">— same five statements, with the colour coding.</span></p>` : ''}
+    </section>
+    ${DATA.statements.map(statementBlock).join('')}
+    ${questionsBlock()}
+    ${DATA.issuesHtml ? `<section class="blk" id="s-issues">
+      <h2>Issues I hit in the sources</h2>
+      <p class="note">Not about these five statements — these affect the corpus and are
+        worth someone's attention at PBSO.</p>
+      <div class="prose">${DATA.issuesHtml}</div></section>` : ''}
+    ${DATA.recheckHtml ? `<section class="blk" id="s-recheck">
+      <h2>What the re-checks changed</h2>
+      <p class="note">Every statement was re-verified against its source PDF over four rounds,
+        by passes told to refute rather than confirm. This is the log, for transparency about
+        what the drafts got wrong before you saw them.</p>
+      <div class="prose">${DATA.recheckHtml}</div></section>` : ''}
+    ${submitBlock()}`;
+
+  const nav = [['s-intro', 'What this is']]
+    .concat(DATA.statements.map(s => ['s-' + s.key, s.country]))
+    .concat([['s-questions', 'Ten questions']]);
+  if (DATA.issuesHtml) nav.push(['s-issues', 'Source issues']);
+  if (DATA.recheckHtml) nav.push(['s-recheck', 'Re-check log']);
+  nav.push(['s-submit', 'Send it back']);
+  $('#rail').innerHTML = nav.map(([id, label]) =>
+    `<a href="#${id}" data-id="${id}">${esc(label)}</a>`).join('');
+
+  if ($('#docx')) $('#docx').onclick = () => dl(
+    'data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,' + DATA.docx,
+    'PBF pilot batch 01.docx');
+  $('#dl').onclick = exportFile;
+  if ($('#send')) $('#send').onclick = submit;
+  $('#tocolour').onclick = () => {
+    colours = !colours;
+    document.querySelectorAll('.stmt-body').forEach(e => e.classList.toggle('colours', colours));
+    document.querySelectorAll('.legend').forEach(e => e.style.display = colours ? '' : 'none');
+    $('#tocolour').textContent = 'Colours: ' + (colours ? 'on' : 'off');
+  };
+  document.querySelectorAll('.stmt-body').forEach(e => e.classList.add('colours'));
+
+  // highlight the topmost section currently on screen, not the last one to cross the line
+  const visible = new Set();
+  const order = nav.map(([id]) => id);
+  const obs = new IntersectionObserver(es => {
+    es.forEach(e => e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id));
+    const top = order.find(id => visible.has(id));
+    document.querySelectorAll('#rail a').forEach(a => a.classList.toggle('on', a.dataset.id === top));
+  }, {rootMargin:'-70px 0px -60% 0px'});
+  document.querySelectorAll('section.blk').forEach(s => obs.observe(s));
+  paintRail();
+}
+
+function paintRail() {
+  DATA.statements.forEach(s => {
+    const a = document.querySelector(`#rail a[data-id="s-${s.key}"]`);
+    if (a) a.classList.toggle('done', !!(FEEDBACK[s.key] && FEEDBACK[s.key].verdict));
+  });
+  const answered = Object.values(FEEDBACK.questions || {}).filter(v => v && v.trim()).length;
+  const q = document.querySelector('#rail a[data-id="s-questions"]');
+  if (q) { q.classList.toggle('done', answered > 0);
+           q.textContent = answered ? `Ten questions (${answered})` : 'Ten questions'; }
+}
+
+function setField(key, field, value) {
+  FEEDBACK[key] = FEEDBACK[key] || {};
+  FEEDBACK[key][field] = value;
+  save();
+}
+function setQ(n, value) {
+  FEEDBACK.questions = FEEDBACK.questions || {};
+  FEEDBACK.questions[n] = value;
+  save();
+}
+
+/* ---------------- delivery ---------------- */
+function bundle() {
+  return {
+    batch: 'pilot-batch-01',
+    reviewer: FEEDBACK.reviewer || '',
+    submittedAt: new Date().toISOString(),
+    statements: Object.fromEntries(DATA.statements.map(s => [s.key, FEEDBACK[s.key] || {}])),
+    questions: FEEDBACK.questions || {},
+    general: FEEDBACK.general || '',
+  };
+}
+function dl(href, name) {
+  const a = document.createElement('a');
+  a.href = href; a.download = name; a.click();
+}
+function exportFile() {
+  const name = (FEEDBACK.reviewer || 'review').replace(/[^\w]+/g, '-').toLowerCase();
+  dl('data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(bundle(), null, 2)),
+     `pbf-pilot-01-feedback-${name}.json`);
+}
+
+async function submit() {
+  const btn = $('#send'), msg = $('#sendmsg');
+  if (!FEEDBACK.reviewer) { msg.textContent = 'Add your name at the top first.'; return; }
+  btn.disabled = true; msg.textContent = 'Sending…';
+  try {
+    const auth = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FB.apiKey}`,
+      {method:'POST', headers:{'Content-Type':'application/json'},
+       body: JSON.stringify({returnSecureToken:true})});
+    if (!auth.ok) throw new Error('auth ' + auth.status);
+    const {idToken} = await auth.json();
+    const body = {fields: {
+      reviewer: {stringValue: FEEDBACK.reviewer},
+      submittedAt: {timestampValue: new Date().toISOString()},
+      payload: {stringValue: JSON.stringify(bundle())},
+    }};
+    const res = await fetch(
+      `https://firestore.googleapis.com/v1/projects/${FB.projectId}/databases/(default)/documents/${FB.collection||'feedback'}`,
+      {method:'POST', headers:{'Content-Type':'application/json', Authorization:'Bearer '+idToken},
+       body: JSON.stringify(body)});
+    if (!res.ok) throw new Error('save ' + res.status + ' ' + (await res.text()).slice(0,120));
+    msg.innerHTML = '<span class="ok">Sent — thank you.</span> You can keep editing and send again; ' +
+      'each submission is kept separately.';
+  } catch (e) {
+    msg.innerHTML = 'Could not send (' + esc(e.message) + '). Use <b>Download a copy</b> and ' +
+      'email me the file — nothing is lost.';
+  }
+  btn.disabled = false;
+}
+
+/* session resume: a refresh should not re-ask for the key */
+(async () => {
+  const k = sessionStorage.getItem(STORE + ':key');
+  if (!k) return;
+  try { DATA = await decrypt(k); start(); } catch { sessionStorage.removeItem(STORE + ':key'); }
+})();
+</script>
+</body>
+</html>

@@ -71,6 +71,26 @@ section.blk > h2 { font-size:19px; margin:0 0 4px; }
 /* ---------- statement ---------- */
 .stmt-head { font-size:21px; line-height:1.3; margin:14px 0 12px; }
 .stmt-body { font-size:17px; line-height:1.72; }
+.browse { margin-bottom:26px; }
+.browse input.q { width:100%; padding:11px 13px; font:inherit; border:1px solid var(--line);
+  border-radius:8px; background:var(--bg); color:var(--ink); }
+.chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.chip { border:1px solid var(--line); border-radius:999px; padding:3px 11px; font-size:13px;
+  cursor:pointer; color:var(--muted); background:none; }
+.chip:hover { color:var(--ink); }
+.chip.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+.chip .n { opacity:.65; margin-left:5px; font-variant-numeric:tabular-nums; }
+.maprow { margin-top:16px; border:1px solid var(--line); border-radius:10px; padding:8px;
+  background:var(--bg); }
+svg.map { width:100%; height:auto; display:block; }
+svg.map .other { fill:#e9e9ea; stroke:#fff; stroke-width:.3; }
+svg.map .has  { fill:#bcd; stroke:#fff; stroke-width:.3; cursor:pointer; }
+svg.map .has:hover { fill:var(--accent); }
+svg.map .has.on { fill:var(--accent); }
+svg.map .dot { fill:#bcd; stroke:#fff; stroke-width:.4; cursor:pointer; }
+svg.map .dot.on, svg.map .dot:hover { fill:var(--accent); }
+.counted { color:var(--muted); font-size:13px; margin-top:10px; }
+.blk.hide { display:none; }
 .colours .ctx  { color:var(--ctx); }
 .colours .chal { color:var(--chal); }
 .colours .chg  { color:var(--chg); }
@@ -206,6 +226,105 @@ function segHTML(segments) {
 
 const VERDICTS = ['Approve as drafted', 'Approve with edits', 'Needs rework', 'Cannot judge yet'];
 
+let Q = '', FPROD = new Set(), FTAG = new Set(), FCTY = new Set();
+
+function projPath(rings) {
+  return rings.map(r => 'M' + r.map(([lo, la]) => `${(lo+180).toFixed(1)},${(90-la).toFixed(1)}`)
+    .join('L') + 'Z').join('');
+}
+
+function mapSVG() {
+  const has = DATA.perCountry || {}, alias = DATA.atlasFor || {};
+  const atlasToCountry = {};
+  Object.entries(alias).forEach(([c, a]) => atlasToCountry[a] = c);
+  const paths = DATA.world.map(f => {
+    const c = atlasToCountry[f.n];
+    const d = projPath(f.p);
+    return c
+      ? `<path class="has" data-c="${esc(c)}" d="${d}"><title>${esc(c)} — ${has[c]} draft${has[c]>1?'s':''}</title></path>`
+      : `<path class="other" d="${d}"/>`;
+  }).join('');
+  const dots = Object.entries(DATA.pointOnly || {}).map(([c, [lo, la]]) =>
+    `<circle class="dot" data-c="${esc(c)}" cx="${(lo+180).toFixed(1)}" cy="${(90-la).toFixed(1)}" r="2.6">
+      <title>${esc(c)} — ${has[c]} draft${has[c]>1?'s':''}</title></circle>`).join('');
+  return `<svg class="map" viewBox="0 0 360 150" preserveAspectRatio="xMidYMid meet">${paths}${dots}</svg>`;
+}
+
+function browseBlock() {
+  const prods = {}, tags = {}, ctys = DATA.perCountry || {};
+  DATA.statements.forEach(s => {
+    prods[s.product] = (prods[s.product] || 0) + 1;
+    (s.flagTags || []).forEach(t => tags[t] = (tags[t] || 0) + 1);
+  });
+  const chip = (cls, v, label, n) =>
+    `<button class="chip" data-k="${cls}" data-v="${esc(v)}">${esc(label)}<span class="n">${n}</span></button>`;
+  return `<section class="blk browse" id="s-browse">
+    <h2>Find a draft</h2>
+    <input class="q" id="q" type="search" autocomplete="off"
+      placeholder="Search headings, text, countries, project IDs and flags — e.g. water, 00130502, sg-check">
+    <div class="chips" id="cprod">${Object.entries(prods).sort((a,b)=>b[1]-a[1])
+      .map(([k,n])=>chip('prod',k,k,n)).join('')}</div>
+    <div class="chips" id="ctag">${Object.entries(tags).sort((a,b)=>b[1]-a[1])
+      .map(([k,n])=>chip('tag',k,k,n)).join('')}</div>
+    <div class="maprow">${mapSVG()}</div>
+    <div class="chips" id="ccty">${Object.entries(ctys).sort((a,b)=>a[0].localeCompare(b[0]))
+      .map(([k,n])=>chip('cty',k,k,n)).join('')}</div>
+    <div class="counted" id="counted"></div>
+  </section>`;
+}
+
+function matches(s) {
+  if (FPROD.size && !FPROD.has(s.product)) return false;
+  if (FCTY.size && !FCTY.has(s.country)) return false;
+  if (FTAG.size && !(s.flagTags || []).some(t => FTAG.has(t))) return false;
+  if (!Q) return true;
+  const hay = (s.country + ' ' + s.id + ' ' + s.heading + ' ' + s.bodyHtml + ' ' +
+               s.product + ' ' + (s.flagTags || []).join(' ') + ' ' + s.sources.join(' ') + ' ' +
+               s.traceHtml).toLowerCase();
+  return Q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
+}
+
+function applyFilter() {
+  let n = 0;
+  DATA.statements.forEach(s => {
+    const ok = matches(s);
+    if (ok) n++;
+    const el = document.getElementById('s-' + s.key);
+    if (el) el.classList.toggle('hide', !ok);
+  });
+  const shown = new Set(DATA.statements.filter(matches).map(s => s.country));
+  document.querySelectorAll('svg.map .has, svg.map .dot').forEach(e =>
+    e.classList.toggle('on', FCTY.has(e.dataset.c) || (FCTY.size === 0 && shown.has(e.dataset.c) && (Q || FPROD.size || FTAG.size))));
+  const c = $('#counted');
+  if (c) c.textContent = n === DATA.statements.length
+    ? `Showing all ${n} drafts.`
+    : `Showing ${n} of ${DATA.statements.length} drafts` +
+      (FCTY.size ? ' · ' + [...FCTY].join(', ') : '') + '. Click a filter again to clear it.';
+  document.querySelectorAll('#rail a[data-id^="s-"]').forEach(a => {
+    const st = DATA.statements.find(x => 's-' + x.key === a.dataset.id);
+    if (st) a.style.display = matches(st) ? '' : 'none';
+  });
+}
+
+function wireBrowse() {
+  const q = $('#q');
+  if (q) q.oninput = e => { Q = e.target.value.trim(); applyFilter(); };
+  document.querySelectorAll('.chip').forEach(b => b.onclick = () => {
+    const set = b.dataset.k === 'prod' ? FPROD : b.dataset.k === 'tag' ? FTAG : FCTY;
+    set.has(b.dataset.v) ? set.delete(b.dataset.v) : set.add(b.dataset.v);
+    b.classList.toggle('on');
+    applyFilter();
+  });
+  document.querySelectorAll('svg.map .has, svg.map .dot').forEach(el => el.onclick = () => {
+    const c = el.dataset.c;
+    FCTY.has(c) ? FCTY.delete(c) : FCTY.add(c);
+    document.querySelectorAll('#ccty .chip').forEach(b =>
+      b.classList.toggle('on', FCTY.has(b.dataset.v)));
+    applyFilter();
+  });
+  applyFilter();
+}
+
 function statementBlock(s, i) {
   const fb = FEEDBACK[s.key] || {};
   return `<section class="blk" id="s-${s.key}">
@@ -281,6 +400,7 @@ function start() {
       ${DATA.docx ? `<p style="margin-top:16px"><button id="docx">Download the Word version</button>
         <span class="note">— every draft, publication text only.</span></p>` : ''}
     </section>
+    ${browseBlock()}
     ${DATA.statements.map(statementBlock).join('')}
     ${questionsBlock()}
     ${DATA.issuesHtml ? `<section class="blk" id="s-issues">
@@ -296,7 +416,9 @@ function start() {
       <div class="prose">${DATA.recheckHtml}</div></section>` : ''}
     ${submitBlock()}`;
 
-  const nav = [['s-intro', 'What this is']]
+  wireBrowse();
+
+  const nav = [['s-intro', 'What this is'], ['s-browse', 'Find a draft']]
     .concat(DATA.statements.map(s => ['s-' + s.key, s.country + ' ' + s.id.split(' ')[0]]))
     .concat([['s-questions', 'Decisions needed']]);
   if (DATA.issuesHtml) nav.push(['s-issues', 'Source issues']);

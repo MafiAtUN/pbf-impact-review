@@ -121,7 +121,7 @@ details[open] summary { margin-bottom:8px; }
 <div id="gate">
   <div class="card">
     <h1>PBF Impact Statements — Pilot Batch 01</h1>
-    <p>Five draft impact statements for PBSO's Impact Hub. Enter the access key you were
+    <p>Draft impact statements and stories for PBSO's Impact Hub. Enter the access key you were
        sent to open them. The documents are encrypted; the key is checked in your browser
        and never sent anywhere.</p>
     <form class="keyrow" id="gateform">
@@ -140,7 +140,7 @@ details[open] summary { margin-bottom:8px; }
         <small id="builtline"></small></h1>
       <input type="text" id="reviewer" placeholder="Your name" style="width:150px" autocomplete="name">
       <span class="save" id="save">saved in this browser</span>
-      <button id="tocolour" title="Toggle the five-element colour coding">Colours: on</button>
+      
     </div>
   </header>
   <main>
@@ -209,18 +209,13 @@ const VERDICTS = ['Approve as drafted', 'Approve with edits', 'Needs rework', 'C
 function statementBlock(s, i) {
   const fb = FEEDBACK[s.key] || {};
   return `<section class="blk" id="s-${s.key}">
-    <div class="eyebrow">Statement ${i+1} of ${DATA.statements.length} · ${esc(s.id)}</div>
+    <div class="eyebrow">${i+1} of ${DATA.statements.length} · ${esc(s.country)} ${esc(s.id)}</div>
     <h2>${esc(s.country)}</h2>
     <div class="stmt-head">${esc(s.heading)}</div>
-    <div class="stmt-body colours-target">${segHTML(s.segments)}</div>
-    <div class="legend">
-      <span class="ctx">Context</span><span class="chal">Peacebuilding challenge</span>
-      <span class="chg">What changed</span><span class="who">For whom</span>
-      <span class="ev">Evidence</span>
-      <span style="color:var(--muted)">· ${s.words} words</span>
-    </div>
+    <div class="stmt-body prose">${s.bodyHtml}</div>
+    <div class="legend"><span style="color:var(--muted)">${esc(s.product)} · ${s.words} words</span></div>
     <div class="meta" style="margin-top:14px"><strong>Source:</strong> ${s.sources.map(esc).join('<br>')}</div>
-    <details><summary>Where every fact comes from — page-by-page trace</summary>
+    <details><summary>Flags — caveats, disagreements between sources, and what needs your decision (not for publication)</summary>
       <div class="prose">${s.traceHtml}</div></details>
     ${s.notesHtml ? `<details><summary>Judgement calls I would like your view on</summary>
       <div class="prose">${s.notesHtml}</div></details>` : ''}
@@ -284,7 +279,7 @@ function start() {
       <h2>What you are looking at</h2>
       <div class="prose">${DATA.introHtml}</div>
       ${DATA.docx ? `<p style="margin-top:16px"><button id="docx">Download the Word version</button>
-        <span class="note">— same five statements, with the colour coding.</span></p>` : ''}
+        <span class="note">— every draft, publication text only.</span></p>` : ''}
     </section>
     ${DATA.statements.map(statementBlock).join('')}
     ${questionsBlock()}
@@ -302,8 +297,8 @@ function start() {
     ${submitBlock()}`;
 
   const nav = [['s-intro', 'What this is']]
-    .concat(DATA.statements.map(s => ['s-' + s.key, s.country]))
-    .concat([['s-questions', 'Ten questions']]);
+    .concat(DATA.statements.map(s => ['s-' + s.key, s.country + ' ' + s.id.split(' ')[0]]))
+    .concat([['s-questions', 'Decisions needed']]);
   if (DATA.issuesHtml) nav.push(['s-issues', 'Source issues']);
   if (DATA.recheckHtml) nav.push(['s-recheck', 'Re-check log']);
   nav.push(['s-submit', 'Send it back']);
@@ -312,16 +307,12 @@ function start() {
 
   if ($('#docx')) $('#docx').onclick = () => dl(
     'data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,' + DATA.docx,
-    'PBF pilot batch 01.docx');
+    'PBF impact statements.docx');
   $('#dl').onclick = exportFile;
   if ($('#send')) $('#send').onclick = submit;
-  $('#tocolour').onclick = () => {
-    colours = !colours;
-    document.querySelectorAll('.stmt-body').forEach(e => e.classList.toggle('colours', colours));
-    document.querySelectorAll('.legend').forEach(e => e.style.display = colours ? '' : 'none');
-    $('#tocolour').textContent = 'Colours: ' + (colours ? 'on' : 'off');
-  };
-  document.querySelectorAll('.stmt-body').forEach(e => e.classList.add('colours'));
+  // The five-element colour toggle is gone: that colouring needed manual (element, text)
+  // segmentation which exists only for the five pilot statements. Leaving the handler in
+  // after removing its button would have thrown here and blanked the page.
 
   // highlight the topmost section currently on screen, not the last one to cross the line
   const visible = new Set();

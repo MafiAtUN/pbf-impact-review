@@ -71,6 +71,37 @@ section.blk > h2 { font-size:19px; margin:0 0 4px; }
 /* ---------- statement ---------- */
 .stmt-head { font-size:21px; line-height:1.3; margin:14px 0 12px; }
 .stmt-body { font-size:17px; line-height:1.72; }
+.cards { display:flex; flex-wrap:wrap; gap:10px; margin:18px 0 6px; }
+.card { flex:1 1 150px; border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+  text-decoration:none; color:var(--ink); display:flex; flex-direction:column; gap:2px; }
+.card:hover { border-color:var(--accent); }
+.card .big { font-size:26px; font-weight:600; font-variant-numeric:tabular-nums; }
+.card span:last-child { font-size:13px; color:var(--muted); }
+.progress { margin-top:14px; }
+.progress .bar { height:7px; border-radius:99px; background:var(--line); overflow:hidden; }
+.progress .bar i { display:block; height:100%; background:var(--accent); transition:width .3s; }
+.progress .note { display:block; margin-top:6px; }
+.btnlink { display:inline-block; border:1px solid var(--line); border-radius:8px; padding:7px 13px;
+  margin-right:8px; text-decoration:none; color:var(--ink); font-size:14px; }
+.btnlink:hover { border-color:var(--accent); color:var(--accent); }
+.rows { margin-top:12px; border-top:1px solid var(--line); }
+.row { display:grid; grid-template-columns:118px 132px 1fr 130px 70px 18px; gap:10px; align-items:baseline;
+  padding:10px 4px; border-bottom:1px solid var(--line); text-decoration:none; color:var(--ink); font-size:14px; }
+.row:hover { background:var(--line); }
+.row .rc { font-weight:600; }
+.row .rid, .row .rp, .row .rf { color:var(--muted); font-size:13px; }
+.row .rh { line-height:1.35; }
+.row .rv { color:var(--accent); font-weight:700; text-align:right; }
+.pager { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:16px; }
+.pager .gap { color:var(--muted); padding:0 2px; }
+.pager .chip[disabled] { opacity:.4; cursor:default; }
+a.chip { text-decoration:none; }
+.eyebrow a { color:var(--muted); text-decoration:none; }
+.eyebrow a:hover { color:var(--accent); }
+@media (max-width:760px) {
+  .row { grid-template-columns:1fr auto; }
+  .row .rid, .row .rp, .row .rf { display:none; }
+}
 .browse { margin-bottom:26px; }
 .browse input.q { width:100%; padding:11px 13px; font:inherit; border:1px solid var(--line);
   border-radius:8px; background:var(--bg); color:var(--ink); }
@@ -226,7 +257,9 @@ function segHTML(segments) {
 
 const VERDICTS = ['Approve as drafted', 'Approve with edits', 'Needs rework', 'Cannot judge yet'];
 
-let Q = '', FPROD = new Set(), FTAG = new Set(), FCTY = new Set();
+let Q = '', FPROD = new Set(), FTAG = new Set(), FCTY = new Set(), ONLYNEW = false;
+let SORT = 'order', PAGE = 1;
+const PER = 20;
 
 function projPath(rings) {
   return rings.map(r => 'M' + r.map(([lo, la]) => `${(lo+180).toFixed(1)},${(90-la).toFixed(1)}`)
@@ -235,122 +268,163 @@ function projPath(rings) {
 
 function mapSVG() {
   const has = DATA.perCountry || {}, alias = DATA.atlasFor || {};
-  const atlasToCountry = {};
-  Object.entries(alias).forEach(([c, a]) => atlasToCountry[a] = c);
+  const back = {};
+  Object.entries(alias).forEach(([c, x]) => back[x] = c);
   const paths = DATA.world.map(f => {
-    const c = atlasToCountry[f.n];
-    const d = projPath(f.p);
-    return c
-      ? `<path class="has" data-c="${esc(c)}" d="${d}"><title>${esc(c)} — ${has[c]} draft${has[c]>1?'s':''}</title></path>`
-      : `<path class="other" d="${d}"/>`;
+    const c = back[f.n], d = projPath(f.p);
+    return c ? `<path class="has" data-c="${esc(c)}" d="${d}"><title>${esc(c)} — ${has[c]} draft${has[c]>1?'s':''}</title></path>`
+             : `<path class="other" d="${d}"/>`;
   }).join('');
   const dots = Object.entries(DATA.pointOnly || {}).map(([c, [lo, la]]) =>
     `<circle class="dot" data-c="${esc(c)}" cx="${(lo+180).toFixed(1)}" cy="${(90-la).toFixed(1)}" r="2.6">
-      <title>${esc(c)} — ${has[c]} draft${has[c]>1?'s':''}</title></circle>`).join('');
+       <title>${esc(c)} — ${has[c]} draft${has[c]>1?'s':''}</title></circle>`).join('');
   return `<svg class="map" viewBox="0 0 360 150" preserveAspectRatio="xMidYMid meet">${paths}${dots}</svg>`;
 }
 
-function browseBlock() {
-  const prods = {}, tags = {}, ctys = DATA.perCountry || {};
-  DATA.statements.forEach(s => {
-    prods[s.product] = (prods[s.product] || 0) + 1;
-    (s.flagTags || []).forEach(t => tags[t] = (tags[t] || 0) + 1);
-  });
-  const chip = (cls, v, label, n) =>
-    `<button class="chip" data-k="${cls}" data-v="${esc(v)}">${esc(label)}<span class="n">${n}</span></button>`;
-  return `<section class="blk browse" id="s-browse">
-    <h2>Find a draft</h2>
-    <input class="q" id="q" type="search" autocomplete="off"
-      placeholder="Search headings, text, countries, project IDs and flags — e.g. water, 00130502, sg-check">
-    <div class="chips" id="cprod">${Object.entries(prods).sort((a,b)=>b[1]-a[1])
-      .map(([k,n])=>chip('prod',k,k,n)).join('')}</div>
-    <div class="chips" id="ctag">${Object.entries(tags).sort((a,b)=>b[1]-a[1])
-      .map(([k,n])=>chip('tag',k,k,n)).join('')}</div>
-    <div class="maprow">${mapSVG()}</div>
-    <div class="chips" id="ccty">${Object.entries(ctys).sort((a,b)=>a[0].localeCompare(b[0]))
-      .map(([k,n])=>chip('cty',k,k,n)).join('')}</div>
-    <div class="counted" id="counted"></div>
-  </section>`;
-}
+const reviewed = s => !!(FEEDBACK[s.key] && FEEDBACK[s.key].verdict);
+const isDraft  = s => s.product !== 'Cross-border duplicate';
 
 function matches(s) {
   if (FPROD.size && !FPROD.has(s.product)) return false;
-  if (FCTY.size && !FCTY.has(s.country)) return false;
-  if (FTAG.size && !(s.flagTags || []).some(t => FTAG.has(t))) return false;
+  if (FCTY.size  && !FCTY.has(s.country)) return false;
+  if (FTAG.size  && !(s.flagTags || []).some(t => FTAG.has(t))) return false;
+  if (ONLYNEW && reviewed(s)) return false;
   if (!Q) return true;
-  const hay = (s.country + ' ' + s.id + ' ' + s.heading + ' ' + s.bodyHtml + ' ' +
-               s.product + ' ' + (s.flagTags || []).join(' ') + ' ' + s.sources.join(' ') + ' ' +
-               s.traceHtml).toLowerCase();
+  const hay = (s.country+' '+s.id+' '+s.heading+' '+s.bodyHtml+' '+s.product+' '+
+               (s.flagTags||[]).join(' ')+' '+s.sources.join(' ')+' '+s.traceHtml).toLowerCase();
   return Q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
 }
 
-function applyFilter() {
-  let n = 0;
-  DATA.statements.forEach(s => {
-    const ok = matches(s);
-    if (ok) n++;
-    const el = document.getElementById('s-' + s.key);
-    if (el) el.classList.toggle('hide', !ok);
-  });
-  const shown = new Set(DATA.statements.filter(matches).map(s => s.country));
-  document.querySelectorAll('svg.map .has, svg.map .dot').forEach(e =>
-    e.classList.toggle('on', FCTY.has(e.dataset.c) || (FCTY.size === 0 && shown.has(e.dataset.c) && (Q || FPROD.size || FTAG.size))));
-  const c = $('#counted');
-  if (c) c.textContent = n === DATA.statements.length
-    ? `Showing all ${n} drafts.`
-    : `Showing ${n} of ${DATA.statements.length} drafts` +
-      (FCTY.size ? ' · ' + [...FCTY].join(', ') : '') + '. Click a filter again to clear it.';
-  document.querySelectorAll('#rail a[data-id^="s-"]').forEach(a => {
-    const st = DATA.statements.find(x => 's-' + x.key === a.dataset.id);
-    if (st) a.style.display = matches(st) ? '' : 'none';
-  });
+function results() {
+  const r = DATA.statements.filter(matches);
+  if (SORT === 'flags')   r.sort((a,b) => (b.flagTags||[]).length - (a.flagTags||[]).length);
+  if (SORT === 'country') r.sort((a,b) => a.country.localeCompare(b.country) || a.id.localeCompare(b.id));
+  if (SORT === 'todo')    r.sort((a,b) => (reviewed(a)?1:0) - (reviewed(b)?1:0));
+  return r;
 }
 
-function wireBrowse() {
-  const q = $('#q');
-  if (q) q.oninput = e => { Q = e.target.value.trim(); applyFilter(); };
-  document.querySelectorAll('.chip').forEach(b => b.onclick = () => {
-    const set = b.dataset.k === 'prod' ? FPROD : b.dataset.k === 'tag' ? FTAG : FCTY;
-    set.has(b.dataset.v) ? set.delete(b.dataset.v) : set.add(b.dataset.v);
-    b.classList.toggle('on');
-    applyFilter();
-  });
-  document.querySelectorAll('svg.map .has, svg.map .dot').forEach(el => el.onclick = () => {
-    const c = el.dataset.c;
-    FCTY.has(c) ? FCTY.delete(c) : FCTY.add(c);
-    document.querySelectorAll('#ccty .chip').forEach(b =>
-      b.classList.toggle('on', FCTY.has(b.dataset.v)));
-    applyFilter();
-  });
-  applyFilter();
+/* ------------------------------------------------------------------ views */
+
+function frontView() {
+  const st = DATA.statements, done = st.filter(s => isDraft(s) && reviewed(s)).length;
+  const tot = st.filter(isDraft).length;
+  const prods = {}, tags = {};
+  st.forEach(s => { prods[s.product] = (prods[s.product]||0)+1;
+                    (s.flagTags||[]).forEach(t => tags[t] = (tags[t]||0)+1); });
+  const card = (n, label, href) =>
+    `<a class="card" href="${href}"><span class="big">${n}</span><span>${esc(label)}</span></a>`;
+  const topTags = Object.entries(tags).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  return `<section class="blk">
+    <h2>PBF impact statements — review</h2>
+    <div class="prose">${DATA.introHtml}</div>
+    <div class="cards">
+      ${Object.entries(prods).sort((a,b)=>b[1]-a[1])
+        .map(([k,n]) => card(n, k, '#/list?prod=' + encodeURIComponent(k))).join('')}
+    </div>
+    <div class="progress"><div class="bar"><i style="width:${tot?Math.round(done/tot*100):0}%"></i></div>
+      <span class="note">${done} of ${tot} drafts have a verdict${done<tot?` · ${tot-done} still to look at`:' · all done'}</span></div>
+    <p style="margin-top:18px">
+      <a class="btnlink" href="#/list">Browse all ${st.length}</a>
+      <a class="btnlink" href="#/list?todo=1">Only what I haven't reviewed</a>
+      <a class="btnlink" href="#/decisions">Decisions you need to take</a>
+      ${DATA.docx ? '<button id="docx">Download the Word version</button>' : ''}
+    </p>
+  </section>
+  <section class="blk">
+    <h2>Where the work is</h2>
+    <p class="note">Click a country to see its drafts.</p>
+    <div class="maprow">${mapSVG()}</div>
+  </section>
+  <section class="blk">
+    <h2>Straight to the parts needing judgement</h2>
+    <p class="note">Flags are reviewer-facing notes, never published. These are the commonest.</p>
+    <div class="chips">${topTags.map(([k,n]) =>
+      `<a class="chip" href="#/list?tag=${encodeURIComponent(k)}">${esc(k)}<span class="n">${n}</span></a>`).join('')}</div>
+  </section>`;
 }
 
-function statementBlock(s, i) {
+function controls() {
+  const prods = {}, tags = {}, ctys = DATA.perCountry || {};
+  DATA.statements.forEach(s => { prods[s.product]=(prods[s.product]||0)+1;
+    (s.flagTags||[]).forEach(t => tags[t]=(tags[t]||0)+1); });
+  const chip = (k,v,n,on) => `<button class="chip${on?' on':''}" data-k="${k}" data-v="${esc(v)}">${esc(v)}<span class="n">${n}</span></button>`;
+  return `<input class="q" id="q" type="search" value="${esc(Q)}" autocomplete="off"
+      placeholder="Search headings, text, countries, project IDs and flags">
+    <div class="chips">${Object.entries(prods).sort((a,b)=>b[1]-a[1]).map(([k,n])=>chip('prod',k,n,FPROD.has(k))).join('')}</div>
+    <div class="chips">${Object.entries(tags).sort((a,b)=>b[1]-a[1]).map(([k,n])=>chip('tag',k,n,FTAG.has(k))).join('')}</div>
+    <div class="chips">${Object.entries(ctys).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,n])=>chip('cty',k,n,FCTY.has(k))).join('')}</div>
+    <div class="chips" style="margin-top:12px">
+      <button class="chip${ONLYNEW?' on':''}" data-k="todo" data-v="1">Not yet reviewed</button>
+      <span class="note" style="margin-left:10px">Sort</span>
+      ${['order','country','flags','todo'].map(k =>
+        `<button class="chip${SORT===k?' on':''}" data-k="sort" data-v="${k}">${
+          {order:'Elena\'s order',country:'Country',flags:'Most flags',todo:'Unreviewed first'}[k]}</button>`).join('')}
+    </div>`;
+}
+
+function listView() {
+  const r = results(), pages = Math.max(1, Math.ceil(r.length / PER));
+  if (PAGE > pages) PAGE = pages;
+  const slice = r.slice((PAGE-1)*PER, PAGE*PER);
+  const rows = slice.map(s => `<a class="row" href="#/p/${s.key}">
+      <span class="rc">${esc(s.country)}</span>
+      <span class="rid">${esc(s.id)}</span>
+      <span class="rh">${esc(s.heading || '—')}</span>
+      <span class="rp">${esc(s.product)}</span>
+      <span class="rf">${(s.flagTags||[]).length} flag${(s.flagTags||[]).length===1?'':'s'}</span>
+      <span class="rv">${reviewed(s) ? '✓' : ''}</span></a>`).join('');
+  const pager = pages > 1 ? `<div class="pager">
+      <button class="chip" data-pg="${PAGE-1}" ${PAGE===1?'disabled':''}>Previous</button>
+      ${Array.from({length:pages},(_,i)=>i+1)
+        .filter(n => n===1 || n===pages || Math.abs(n-PAGE)<=2)
+        .map((n,i,arr) => (i && n-arr[i-1]>1 ? '<span class="gap">…</span>' : '') +
+          `<button class="chip${n===PAGE?' on':''}" data-pg="${n}">${n}</button>`).join('')}
+      <button class="chip" data-pg="${PAGE+1}" ${PAGE===pages?'disabled':''}>Next</button>
+    </div>` : '';
+  return `<section class="blk browse">
+    <h2>Find a draft</h2>
+    ${controls()}
+    <div class="maprow" style="margin-top:14px">${mapSVG()}</div>
+    <div class="counted">${r.length === DATA.statements.length
+      ? `All ${r.length} drafts` : `${r.length} of ${DATA.statements.length} drafts`}${
+      pages>1 ? ` · page ${PAGE} of ${pages}` : ''}</div>
+    <div class="rows">${rows || '<p class="note">Nothing matches. Clear a filter.</p>'}</div>
+    ${pager}
+  </section>`;
+}
+
+function projectView(key) {
+  const r = results(), i = r.findIndex(s => s.key === key);
+  const s = (i >= 0 ? r[i] : DATA.statements.find(x => x.key === key));
+  if (!s) return `<section class="blk"><h2>Not found</h2>
+    <p><a class="btnlink" href="#/list">Back to the list</a></p></section>`;
+  const prev = i > 0 ? r[i-1] : null, next = (i >= 0 && i < r.length-1) ? r[i+1] : null;
   const fb = FEEDBACK[s.key] || {};
-  return `<section class="blk" id="s-${s.key}">
-    <div class="eyebrow">${i+1} of ${DATA.statements.length} · ${esc(s.country)} ${esc(s.id)}</div>
-    <h2>${esc(s.country)}</h2>
+  return `<section class="blk">
+    <div class="eyebrow"><a href="#/list">← all drafts</a>${i>=0 ? ` · ${i+1} of ${r.length}` : ''}</div>
+    <h2>${esc(s.country)} <span class="note">${esc(s.id)}</span></h2>
+    <div class="legend"><span style="color:var(--muted)">${esc(s.product)} · ${s.words} words</span></div>
     <div class="stmt-head">${esc(s.heading)}</div>
     <div class="stmt-body prose">${s.bodyHtml}</div>
-    <div class="legend"><span style="color:var(--muted)">${esc(s.product)} · ${s.words} words</span></div>
     <div class="meta" style="margin-top:14px"><strong>Source:</strong> ${s.sources.map(esc).join('<br>')}</div>
-    <details><summary>Flags — caveats, disagreements between sources, and what needs your decision (not for publication)</summary>
-      <div class="prose">${s.traceHtml}</div></details>
-    ${s.notesHtml ? `<details><summary>Judgement calls I would like your view on</summary>
-      <div class="prose">${s.notesHtml}</div></details>` : ''}
+    ${s.traceHtml ? `<details open><summary>Flags — caveats, source disagreements, and what needs your decision (not for publication)</summary>
+      <div class="prose">${s.traceHtml}</div></details>` : ''}
     <div class="fb">
       <span class="fb-label">Your verdict</span>
       <div class="verdicts">${VERDICTS.map(v => `<label><input type="radio" name="v-${s.key}"
         value="${esc(v)}" ${fb.verdict===v?'checked':''}
-        onchange="setField('${s.key}','verdict',this.value)">${esc(v)}</label>`).join('')}</div>
+        onchange="setField('${s.key}','verdict',this.value); paintProgress()">${esc(v)}</label>`).join('')}</div>
       <label class="fb-label" for="h-${s.key}">A better heading, if you have one</label>
       <input type="text" id="h-${s.key}" value="${esc(fb.heading||'')}"
-        placeholder="AP/news-bulletin style — change + number + place"
         oninput="setField('${s.key}','heading',this.value)">
-      <label class="fb-label" for="c-${s.key}">Comments — anything to change, cut, or check</label>
-      <textarea id="c-${s.key}" placeholder="Quote the wording you mean, if it helps."
-        oninput="setField('${s.key}','comment',this.value)">${esc(fb.comment||'')}</textarea>
+      <label class="fb-label" for="c-${s.key}">Comments</label>
+      <textarea id="c-${s.key}" oninput="setField('${s.key}','comment',this.value)">${esc(fb.comment||'')}</textarea>
     </div>
+    <div class="pager">
+      ${prev ? `<a class="chip" href="#/p/${prev.key}">← ${esc(prev.country)} ${esc(prev.id.split(' ')[0])}</a>` : ''}
+      ${next ? `<a class="chip" href="#/p/${next.key}">${esc(next.country)} ${esc(next.id.split(' ')[0])} →</a>` : ''}
+    </div>
+    <p class="note" style="margin-top:10px">Use ← and → to move between drafts.</p>
   </section>`;
 }
 
@@ -386,77 +460,118 @@ function submitBlock() {
   </section>`;
 }
 
-function start() {
-  $('#gate').style.display = 'none';
-  $('#app').style.display = 'block';
-  $('#builtline').textContent = `${DATA.statements.length} statements · drafted ${DATA.built}`;
-  $('#reviewer').value = FEEDBACK.reviewer || '';
-  $('#reviewer').oninput = e => { FEEDBACK.reviewer = e.target.value; save(); };
+function route() {
+  const h = location.hash.replace(/^#\/?/, '');
+  const [path, qs] = h.split('?');
+  const params = new URLSearchParams(qs || '');
+  if (params.has('prod')) { FPROD.clear(); FPROD.add(params.get('prod')); }
+  if (params.has('tag'))  { FTAG.clear();  FTAG.add(params.get('tag')); }
+  if (params.has('cty'))  { FCTY.clear();  FCTY.add(params.get('cty')); }
+  if (params.has('todo')) ONLYNEW = true;
+  if (params.toString()) PAGE = 1;
+  const seg = path.split('/');
+  if (seg[0] === 'p' && seg[1]) return {view: 'project', key: decodeURIComponent(seg[1])};
+  if (seg[0] === 'list')      return {view: 'list'};
+  if (seg[0] === 'decisions') return {view: 'decisions'};
+  if (seg[0] === 'submit')    return {view: 'submit'};
+  return {view: 'front'};
+}
 
-  $('#content').innerHTML = `
-    <section class="blk" id="s-intro">
-      <h2>What you are looking at</h2>
-      <div class="prose">${DATA.introHtml}</div>
-      ${DATA.docx ? `<p style="margin-top:16px"><button id="docx">Download the Word version</button>
-        <span class="note">— every draft, publication text only.</span></p>` : ''}
-    </section>
-    ${browseBlock()}
-    ${DATA.statements.map(statementBlock).join('')}
-    ${questionsBlock()}
-    ${DATA.issuesHtml ? `<section class="blk" id="s-issues">
-      <h2>Issues I hit in the sources</h2>
-      <p class="note">Not about these five statements — these affect the corpus and are
-        worth someone's attention at PBSO.</p>
-      <div class="prose">${DATA.issuesHtml}</div></section>` : ''}
-    ${DATA.recheckHtml ? `<section class="blk" id="s-recheck">
-      <h2>What the re-checks changed</h2>
-      <p class="note">Every statement was re-verified against its source PDF over four rounds,
-        by passes told to refute rather than confirm. This is the log, for transparency about
-        what the drafts got wrong before you saw them.</p>
-      <div class="prose">${DATA.recheckHtml}</div></section>` : ''}
-    ${submitBlock()}`;
+function render() {
+  const r = route();
+  const html =
+    r.view === 'front'     ? frontView() :
+    r.view === 'list'      ? listView() :
+    r.view === 'project'   ? projectView(r.key) :
+    r.view === 'decisions' ? questionsBlock() :
+                             submitBlock();
+  $('#content').innerHTML = html;
+  window.scrollTo(0, 0);
+  wire(r);
+  paintRail(r.view);
+  paintProgress();
+}
 
-  wireBrowse();
-
-  const nav = [['s-intro', 'What this is'], ['s-browse', 'Find a draft']]
-    .concat(DATA.statements.map(s => ['s-' + s.key, s.country + ' ' + s.id.split(' ')[0]]))
-    .concat([['s-questions', 'Decisions needed']]);
-  if (DATA.issuesHtml) nav.push(['s-issues', 'Source issues']);
-  if (DATA.recheckHtml) nav.push(['s-recheck', 'Re-check log']);
-  nav.push(['s-submit', 'Send it back']);
-  $('#rail').innerHTML = nav.map(([id, label]) =>
-    `<a href="#${id}" data-id="${id}">${esc(label)}</a>`).join('');
-
+function wire(r) {
+  const q = $('#q');
+  if (q) {
+    q.oninput = e => { Q = e.target.value.trim(); PAGE = 1; redrawList(); };
+    if (Q) { q.focus(); q.setSelectionRange(Q.length, Q.length); }
+  }
+  document.querySelectorAll('button.chip[data-k]').forEach(btn => btn.onclick = () => {
+    const {k, v} = btn.dataset;
+    if (k === 'sort') SORT = v;
+    else if (k === 'todo') ONLYNEW = !ONLYNEW;
+    else { const set = k === 'prod' ? FPROD : k === 'tag' ? FTAG : FCTY;
+           set.has(v) ? set.delete(v) : set.add(v); }
+    PAGE = 1; redrawList();
+  });
+  document.querySelectorAll('.pager button[data-pg]').forEach(btn => btn.onclick = () => {
+    PAGE = +btn.dataset.pg; redrawList();
+  });
+  document.querySelectorAll('svg.map .has, svg.map .dot').forEach(el => el.onclick = () => {
+    const c = el.dataset.c;
+    if (r.view === 'front') { location.hash = '#/list?cty=' + encodeURIComponent(c); return; }
+    FCTY.has(c) ? FCTY.delete(c) : FCTY.add(c);
+    PAGE = 1; redrawList();
+  });
   if ($('#docx')) $('#docx').onclick = () => dl(
     'data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,' + DATA.docx,
     'PBF impact statements.docx');
-  $('#dl').onclick = exportFile;
+  if ($('#dl')) $('#dl').onclick = exportFile;
   if ($('#send')) $('#send').onclick = submit;
-  // The five-element colour toggle is gone: that colouring needed manual (element, text)
-  // segmentation which exists only for the five pilot statements. Leaving the handler in
-  // after removing its button would have thrown here and blanked the page.
-
-  // highlight the topmost section currently on screen, not the last one to cross the line
-  const visible = new Set();
-  const order = nav.map(([id]) => id);
-  const obs = new IntersectionObserver(es => {
-    es.forEach(e => e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id));
-    const top = order.find(id => visible.has(id));
-    document.querySelectorAll('#rail a').forEach(a => a.classList.toggle('on', a.dataset.id === top));
-  }, {rootMargin:'-70px 0px -60% 0px'});
-  document.querySelectorAll('section.blk').forEach(s => obs.observe(s));
-  paintRail();
 }
 
-function paintRail() {
-  DATA.statements.forEach(s => {
-    const a = document.querySelector(`#rail a[data-id="s-${s.key}"]`);
-    if (a) a.classList.toggle('done', !!(FEEDBACK[s.key] && FEEDBACK[s.key].verdict));
+// Re-render the list in place. Changing a filter must not push a history entry --
+// the back button should leave the list, not step through every chip clicked.
+function redrawList() {
+  if (route().view !== 'list') { location.hash = '#/list'; return; }
+  $('#content').innerHTML = listView();
+  wire({view: 'list'});
+  paintProgress();
+}
+
+function paintProgress() {
+  const tot = DATA.statements.filter(isDraft).length;
+  const done = DATA.statements.filter(s => isDraft(s) && reviewed(s)).length;
+  const el = $('#builtline');
+  if (el) el.textContent = `${DATA.statements.length} drafts · ${done}/${tot} reviewed · built ${DATA.built}`;
+  const bar = document.querySelector('.progress .bar i');
+  if (bar) bar.style.width = (tot ? Math.round(done / tot * 100) : 0) + '%';
+  document.querySelectorAll('.rows .row').forEach(a => {
+    const k = a.getAttribute('href').split('/p/')[1];
+    const s = DATA.statements.find(x => x.key === k);
+    const v = a.querySelector('.rv');
+    if (s && v) v.textContent = reviewed(s) ? '✓' : '';
   });
-  const answered = Object.values(FEEDBACK.questions || {}).filter(v => v && v.trim()).length;
-  const q = document.querySelector('#rail a[data-id="s-questions"]');
-  if (q) { q.classList.toggle('done', answered > 0);
-           q.textContent = answered ? `Ten questions (${answered})` : 'Ten questions'; }
+}
+
+function paintRail(view) {
+  const nav = [['#/', 'Front page'], ['#/list', 'All drafts'],
+               ['#/decisions', 'Decisions needed'], ['#/submit', 'Send it back']];
+  $('#rail').innerHTML = nav.map(([href, label]) =>
+    `<a href="${href}" class="${(view==='front'&&href==='#/')||
+       (view==='list'&&href==='#/list')||(view==='project'&&href==='#/list')||
+       (view==='decisions'&&href==='#/decisions')||(view==='submit'&&href==='#/submit') ? 'on':''}">${esc(label)}</a>`).join('');
+}
+
+function start() {
+  $('#gate').style.display = 'none';
+  $('#app').style.display = 'block';
+  $('#reviewer').value = FEEDBACK.reviewer || '';
+  $('#reviewer').oninput = e => { FEEDBACK.reviewer = e.target.value; save(); };
+  window.addEventListener('hashchange', render);
+  // arrow keys step through drafts, which matters at 135; ignore them while typing
+  window.addEventListener('keydown', e => {
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const m = location.hash.match(/^#\/p\/(.+)$/);
+    if (!m) return;
+    const r = results(), i = r.findIndex(s => s.key === decodeURIComponent(m[1]));
+    const to = e.key === 'ArrowRight' ? r[i+1] : r[i-1];
+    if (to) location.hash = '#/p/' + to.key;
+  });
+  render();
 }
 
 function setField(key, field, value) {

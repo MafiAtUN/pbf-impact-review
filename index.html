@@ -71,6 +71,34 @@ section.blk > h2 { font-size:19px; margin:0 0 4px; }
 /* ---------- statement ---------- */
 .stmt-head { font-size:21px; line-height:1.3; margin:14px 0 12px; }
 .stmt-body { font-size:17px; line-height:1.72; }
+.kpis { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0 10px; }
+.kpi { flex:1 1 130px; border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+  display:flex; flex-direction:column; gap:1px; }
+.kpi .big { font-size:30px; font-weight:600; font-variant-numeric:tabular-nums; line-height:1.05; }
+.kpi .kl { font-size:13px; }
+.kpi .ks { font-size:12px; color:var(--muted); }
+.bars { margin-top:10px; }
+.bar { display:grid; grid-template-columns:210px 1fr 46px; gap:10px; align-items:center;
+  padding:5px 0; text-decoration:none; color:var(--ink); font-size:14px; }
+a.bar:hover .bl { color:var(--accent); }
+.bar .bl { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bar .bt { background:var(--line); border-radius:99px; height:9px; overflow:hidden; }
+.bar .bt i { display:block; height:100%; background:var(--accent); border-radius:99px; }
+.bar .bn { text-align:right; font-variant-numeric:tabular-nums; color:var(--muted); }
+.scale { display:flex; align-items:center; gap:12px; margin-top:8px; font-size:12px; color:var(--muted); }
+.scale span { display:flex; align-items:center; gap:5px; }
+.scale i { width:13px; height:13px; border-radius:3px; display:inline-block; }
+.hist { display:flex; align-items:flex-end; gap:3px; height:110px; margin-top:10px;
+  border-bottom:1px solid var(--line); }
+.hist .hb { flex:1; background:var(--accent); border-radius:3px 3px 0 0; min-height:2px; opacity:.85; }
+.hist .hb:hover { opacity:1; }
+.haxis { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-top:5px; }
+.haxis .mid { flex:1; text-align:center; }
+.two { display:grid; grid-template-columns:1fr 1fr; gap:26px; }
+h3.sub { font-size:14px; margin:18px 0 0; font-weight:600; }
+ul.plain { margin:12px 0 0; padding-left:18px; font-size:14px; line-height:1.65; }
+ul.plain li { margin-bottom:6px; }
+@media (max-width:760px) { .two { grid-template-columns:1fr; } .bar { grid-template-columns:130px 1fr 40px; } }
 .cards { display:flex; flex-wrap:wrap; gap:10px; margin:18px 0 6px; }
 .card { flex:1 1 150px; border:1px solid var(--line); border-radius:10px; padding:12px 14px;
   text-decoration:none; color:var(--ink); display:flex; flex-direction:column; gap:2px; }
@@ -257,7 +285,7 @@ function segHTML(segments) {
 
 const VERDICTS = ['Approve as drafted', 'Approve with edits', 'Needs rework', 'Cannot judge yet'];
 
-let Q = '', FPROD = new Set(), FTAG = new Set(), FCTY = new Set(), ONLYNEW = false;
+let Q = '', FPROD = new Set(), FTAG = new Set(), FCTY = new Set(), FEV = new Set(), ONLYNEW = false;
 let SORT = 'order', PAGE = 1;
 const PER = 20;
 
@@ -288,6 +316,7 @@ function matches(s) {
   if (FPROD.size && !FPROD.has(s.product)) return false;
   if (FCTY.size  && !FCTY.has(s.country)) return false;
   if (FTAG.size  && !(s.flagTags || []).some(t => FTAG.has(t))) return false;
+  if (FEV.size   && !FEV.has(s.evidence)) return false;
   if (ONLYNEW && reviewed(s)) return false;
   if (!Q) return true;
   const hay = (s.country+' '+s.id+' '+s.heading+' '+s.bodyHtml+' '+s.product+' '+
@@ -324,6 +353,7 @@ function frontView() {
     <div class="progress"><div class="bar"><i style="width:${tot?Math.round(done/tot*100):0}%"></i></div>
       <span class="note">${done} of ${tot} drafts have a verdict${done<tot?` · ${tot-done} still to look at`:' · all done'}</span></div>
     <p style="margin-top:18px">
+      <a class="btnlink" href="#/dash">Dashboard</a>
       <a class="btnlink" href="#/list">Browse all ${st.length}</a>
       <a class="btnlink" href="#/list?todo=1">Only what I haven't reviewed</a>
       <a class="btnlink" href="#/decisions">Decisions you need to take</a>
@@ -340,6 +370,130 @@ function frontView() {
     <p class="note">Flags are reviewer-facing notes, never published. These are the commonest.</p>
     <div class="chips">${topTags.map(([k,n]) =>
       `<a class="chip" href="#/list?tag=${encodeURIComponent(k)}">${esc(k)}<span class="n">${n}</span></a>`).join('')}</div>
+  </section>`;
+}
+
+function bars(rows, opts) {
+  const max = Math.max(...rows.map(r => r[1]), 1);
+  return `<div class="bars">${rows.map(([label, n, href]) => {
+    const w = (n / max * 100).toFixed(1);
+    const inner = `<span class="bl">${esc(label)}</span>
+      <span class="bt"><i style="width:${w}%"></i></span><span class="bn">${n}</span>`;
+    return href ? `<a class="bar" href="${href}">${inner}</a>` : `<div class="bar">${inner}</div>`;
+  }).join('')}</div>`;
+}
+
+function choropleth() {
+  const has = DATA.perCountry || {}, alias = DATA.atlasFor || {};
+  const back = {}; Object.entries(alias).forEach(([c, x]) => back[x] = c);
+  const max = Math.max(...Object.values(has), 1);
+  const shade = n => `hsl(207 62% ${88 - Math.round(n / max * 45)}%)`;
+  const paths = DATA.world.map(f => {
+    const c = back[f.n], d = projPath(f.p);
+    return c ? `<path class="has" data-c="${esc(c)}" style="fill:${shade(has[c])}" d="${d}">
+        <title>${esc(c)} — ${has[c]} draft${has[c]>1?'s':''}</title></path>`
+             : `<path class="other" d="${d}"/>`;
+  }).join('');
+  const dots = Object.entries(DATA.pointOnly || {}).map(([c, [lo, la]]) =>
+    `<circle class="dot" data-c="${esc(c)}" style="fill:${shade(has[c])}"
+       cx="${(lo+180).toFixed(1)}" cy="${(90-la).toFixed(1)}" r="2.6">
+       <title>${esc(c)} — ${has[c]}</title></circle>`).join('');
+  const steps = [1, Math.ceil(max/3), Math.ceil(max*2/3), max].filter((v,i,a)=>a.indexOf(v)===i);
+  return `<svg class="map" viewBox="0 0 360 150" preserveAspectRatio="xMidYMid meet">${paths}${dots}</svg>
+    <div class="scale">${steps.map(v =>
+      `<span><i style="background:${shade(v)}"></i>${v}</span>`).join('')}<span class="note">drafts per country</span></div>`;
+}
+
+function histogram(vals, lo, hi, target) {
+  const bins = 14, w = (hi - lo) / bins, counts = new Array(bins).fill(0);
+  vals.forEach(v => { const i = Math.min(bins-1, Math.max(0, Math.floor((v - lo) / w))); counts[i]++; });
+  const max = Math.max(...counts, 1);
+  return `<div class="hist">${counts.map((c, i) => {
+    const a = Math.round(lo + i*w), b = Math.round(lo + (i+1)*w);
+    return `<span class="hb" style="height:${(c/max*100).toFixed(0)}%"
+      title="${a}–${b} words · ${c} draft${c===1?'':'s'}"></span>`;
+  }).join('')}</div>
+  <div class="haxis"><span>${lo}</span><span class="mid">${target} target</span><span>${hi}</span></div>`;
+}
+
+function dashView() {
+  const S = DATA.stats, st = DATA.statements;
+  const tot = S.substantive, done = st.filter(s => isDraft(s) && reviewed(s)).length;
+  const kpi = (n, l, sub) => `<div class="kpi"><span class="big">${n}</span>
+    <span class="kl">${esc(l)}</span>${sub ? `<span class="ks">${esc(sub)}</span>` : ''}</div>`;
+  const ev = Object.entries(S.evidence).sort((a,b)=>b[1]-a[1])
+    .map(([k,n]) => [k, n, '#/list?ev=' + encodeURIComponent(k)]);
+  const fl = Object.entries(S.flags).sort((a,b)=>b[1]-a[1])
+    .map(([k,n]) => [k, n, '#/list?tag=' + encodeURIComponent(k)]);
+  const cty = Object.entries(S.perCountry).sort((a,b)=>b[1]-a[1]).slice(0,15)
+    .map(([k,n]) => [k, n, '#/list?cty=' + encodeURIComponent(k)]);
+  const fpd = Object.entries(S.flagsPerDraft).sort((a,b)=>+a[0]-+b[0]).map(([k,n]) => [k + ' flags', n]);
+  return `<section class="blk">
+    <h2>Overview</h2>
+    <div class="kpis">
+      ${kpi(S.total, 'files', `${tot} to review · ${S.total - tot} pointers`)}
+      ${kpi(S.product['Impact statement'] || 0, 'impact statements')}
+      ${kpi(S.product['Impact story'] || 0, 'impact stories')}
+      ${kpi(S.countries, 'countries')}
+      ${kpi(done, 'reviewed', `${tot - done} to go`)}
+    </div>
+    <div class="progress"><div class="bar"><i style="width:${tot?Math.round(done/tot*100):0}%"></i></div></div>
+  </section>
+
+  <section class="blk">
+    <h2>What the drafts rest on</h2>
+    <p class="note">The evidence hierarchy decides whether a project can carry a statement or only a
+      story. Click a bar to see those drafts.</p>
+    ${bars(ev)}
+    <p class="note" style="margin-top:12px"><strong>No project in this library has an impact
+      evaluation</strong>, which sits at the top of the hierarchy. ${S.evidence['Project reporting only']||0}
+      drafts rest on the project's own reporting alone — those are stories by definition, not a
+      judgement call.</p>
+  </section>
+
+  <section class="blk">
+    <h2>Where the work is</h2>
+    <p class="note">Shaded by number of drafts. Click a country to see them.</p>
+    <div class="maprow">${choropleth()}</div>
+    <h3 class="sub">Busiest countries</h3>
+    ${bars(cty)}
+  </section>
+
+  <section class="blk">
+    <h2>What the flags say</h2>
+    <p class="note">Flags are reviewer-facing and never published. They are the fastest route to the
+      parts needing your judgement rather than your proofreading.</p>
+    ${bars(fl)}
+  </section>
+
+  <section class="blk">
+    <h2>Shape of the drafts</h2>
+    <div class="two">
+      <div>
+        <h3 class="sub">Length against the 120–200 word rule</h3>
+        ${histogram(S.words, 120, 200, 150)}
+        <p class="note">All ${S.words.length} drafts sit inside the range.</p>
+      </div>
+      <div>
+        <h3 class="sub">Flags per draft</h3>
+        ${bars(fpd)}
+        <p class="note">More flags is not worse work — it is a draft with more that needs checking.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="blk">
+    <h2>What this does not cover</h2>
+    <ul class="plain">
+      <li><strong>${S.mirror.held} projects held against ${S.mirror.reported} reported uploaded.</strong>
+        This is the corpus as mirrored, not the whole programme.</li>
+      <li><strong>${S.noShortCode} drafts carry no PBF short code.</strong> None could be found in the
+        sources; they are recorded as unresolved rather than guessed.</li>
+      <li><strong>${S.product['Cross-border duplicate']||0} cross-border pointers.</strong> One project
+        filed under several MPTFO IDs gets one draft and a pointer from each sibling ID.</li>
+      <li><strong>${S.product['Statement forthcoming — reason in the flags']||0} forthcoming.</strong>
+        Neither is a finding of no impact — the reason is in each one's flags.</li>
+    </ul>
   </section>`;
 }
 
@@ -467,10 +621,12 @@ function route() {
   if (params.has('prod')) { FPROD.clear(); FPROD.add(params.get('prod')); }
   if (params.has('tag'))  { FTAG.clear();  FTAG.add(params.get('tag')); }
   if (params.has('cty'))  { FCTY.clear();  FCTY.add(params.get('cty')); }
+  if (params.has('ev'))   { FEV.clear();   FEV.add(params.get('ev')); }
   if (params.has('todo')) ONLYNEW = true;
   if (params.toString()) PAGE = 1;
   const seg = path.split('/');
   if (seg[0] === 'p' && seg[1]) return {view: 'project', key: decodeURIComponent(seg[1])};
+  if (seg[0] === 'dash')      return {view: 'dash'};
   if (seg[0] === 'list')      return {view: 'list'};
   if (seg[0] === 'decisions') return {view: 'decisions'};
   if (seg[0] === 'submit')    return {view: 'submit'};
@@ -481,6 +637,7 @@ function render() {
   const r = route();
   const html =
     r.view === 'front'     ? frontView() :
+    r.view === 'dash'      ? dashView() :
     r.view === 'list'      ? listView() :
     r.view === 'project'   ? projectView(r.key) :
     r.view === 'decisions' ? questionsBlock() :
@@ -511,7 +668,7 @@ function wire(r) {
   });
   document.querySelectorAll('svg.map .has, svg.map .dot').forEach(el => el.onclick = () => {
     const c = el.dataset.c;
-    if (r.view === 'front') { location.hash = '#/list?cty=' + encodeURIComponent(c); return; }
+    if (r.view === 'front' || r.view === 'dash') { location.hash = '#/list?cty=' + encodeURIComponent(c); return; }
     FCTY.has(c) ? FCTY.delete(c) : FCTY.add(c);
     PAGE = 1; redrawList();
   });
@@ -547,11 +704,11 @@ function paintProgress() {
 }
 
 function paintRail(view) {
-  const nav = [['#/', 'Front page'], ['#/list', 'All drafts'],
+  const nav = [['#/', 'Front page'], ['#/dash', 'Dashboard'], ['#/list', 'All drafts'],
                ['#/decisions', 'Decisions needed'], ['#/submit', 'Send it back']];
   $('#rail').innerHTML = nav.map(([href, label]) =>
     `<a href="${href}" class="${(view==='front'&&href==='#/')||
-       (view==='list'&&href==='#/list')||(view==='project'&&href==='#/list')||
+       (view==='dash'&&href==='#/dash')||(view==='list'&&href==='#/list')||(view==='project'&&href==='#/list')||
        (view==='decisions'&&href==='#/decisions')||(view==='submit'&&href==='#/submit') ? 'on':''}">${esc(label)}</a>`).join('');
 }
 

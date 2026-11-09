@@ -599,19 +599,30 @@ function questionsBlock() {
 
 function submitBlock() {
   const live = window.FB && FB.apiKey && FB.projectId;
+  const to = (window.FB && FB.contact) || '';
   return `<section class="blk" id="s-submit">
     <h2>Send it back</h2>
     <p class="note">${live
-      ? 'This goes straight to the drafting team. Nothing is published anywhere public.'
-      : 'Feedback delivery is not wired up yet — use Download, and email me the file.'}</p>
+      ? 'Submit goes straight to the drafting team. Nothing is published anywhere public. ' +
+        'If it ever fails, the other two buttons still work.'
+      : 'Everything you type is saved in this browser as you go, so you can close the tab and ' +
+        'come back. Use either button below to return it — both carry the same answers.'}</p>
     <label class="fb-label" for="general">Anything else — on the format, the batch, or what to do next</label>
     <textarea id="general" oninput="FEEDBACK.general=this.value; save()">${esc(FEEDBACK.general||'')}</textarea>
     <div class="submitbar">
       ${live ? '<button class="primary" id="send">Submit feedback</button>' : ''}
+      ${to ? `<button class="${live ? '' : 'primary'}" id="mail">Email it back</button>` : ''}
       <button id="dl">Download a copy</button>
-      <span class="note" id="sendmsg">Your answers save in this browser as you type.</span>
+      <span class="note" id="sendmsg">Saved in this browser as you type${
+        reviewedCount() ? ` — ${reviewedCount()} statement${reviewedCount()===1?'':'s'} reviewed so far` : ''}.</span>
     </div>
   </section>`;
+}
+
+/* How many statements carry a verdict — shown so a reviewer can see nothing was lost. */
+function reviewedCount() {
+  if (!DATA) return 0;
+  return DATA.statements.filter(s => FEEDBACK[s.key] && FEEDBACK[s.key].verdict).length;
 }
 
 function route() {
@@ -676,6 +687,7 @@ function wire(r) {
     'data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,' + DATA.docx,
     'PBF impact statements.docx');
   if ($('#dl')) $('#dl').onclick = exportFile;
+  if ($('#mail')) $('#mail').onclick = emailBack;
   if ($('#send')) $('#send').onclick = submit;
 }
 
@@ -763,6 +775,69 @@ function exportFile() {
      `pbf-pilot-01-feedback-${name}.json`);
 }
 
+/* A readable digest of the verdicts, for the body of an email. The machine-readable
+   bundle goes as the attachment; this is so the message is useful on its own. */
+function digest() {
+  const lines = [];
+  const scored = DATA.statements.filter(s => {
+    const f = FEEDBACK[s.key] || {};
+    return f.verdict || (f.heading || '').trim() || (f.comment || '').trim();
+  });
+  for (const s of scored) {
+    const f = FEEDBACK[s.key] || {};
+    lines.push(`${s.country} ${s.id} — ${f.verdict || 'no verdict'}`);
+    if ((f.heading || '').trim()) lines.push(`    heading: ${f.heading.trim()}`);
+    if ((f.comment || '').trim()) lines.push(`    ${f.comment.trim().replace(/\s+/g, ' ')}`);
+  }
+  const qs = FEEDBACK.questions || {};
+  const answered = Object.keys(qs).filter(k => (qs[k] || '').trim());
+  if (answered.length) {
+    lines.push('', 'Questions:');
+    for (const k of answered) lines.push(`  ${k}. ${qs[k].trim().replace(/\s+/g, ' ')}`);
+  }
+  if ((FEEDBACK.general || '').trim()) {
+    lines.push('', 'General:', FEEDBACK.general.trim());
+  }
+  return {text: lines.join('\n'), scored: scored.length};
+}
+
+/* Opens the reviewer's own mail client. No server, no account, nothing leaves the
+   browser until they press send -- which is why this is the fallback that always works.
+   The JSON is downloaded at the same time so there is something to attach. */
+function emailBack() {
+  const msg = $('#sendmsg');
+  if (!FEEDBACK.reviewer) { msg.textContent = 'Add your name at the top first.'; return; }
+  const d = digest();
+  if (!d.scored && !(FEEDBACK.general || '').trim()) {
+    msg.textContent = 'Nothing recorded yet — add a verdict or a comment first.';
+    return;
+  }
+  exportFile();
+  const to = FB.contact;
+  const subject = `PBF impact statements — feedback from ${FEEDBACK.reviewer}`;
+  // Outlook has historically truncated a mailto URL around 2,048 characters, and
+  // percent-encoding roughly doubles newlines, so the digest is capped well short of
+  // that and cut back to a line boundary rather than mid-word. 435 statements with
+  // comments on every one is ~55,000 characters of digest; the file carries the rest.
+  const cap = 820;
+  let body = d.text;
+  const truncated = body.length > cap;
+  if (truncated) {
+    body = body.slice(0, cap);
+    const lastBreak = body.lastIndexOf('\n');
+    if (lastBreak > cap * 0.5) body = body.slice(0, lastBreak);
+    body += '\n\n[...truncated here — all ' + d.scored + ' are in the attached file]';
+  }
+  const head = `Reviewer: ${FEEDBACK.reviewer}\n` +
+    `Statements with feedback: ${d.scored} of ${DATA.statements.length}\n\n` +
+    `The complete answers have just been downloaded as a .json file — please attach it.\n\n`;
+  location.href = 'mailto:' + encodeURIComponent(to) +
+    '?subject=' + encodeURIComponent(subject) +
+    '&body=' + encodeURIComponent(head + body);
+  msg.innerHTML = '<span class="ok">Your mail client should be opening.</span> ' +
+    'The .json file was downloaded too — attach it before sending.';
+}
+
 async function submit() {
   const btn = $('#send'), msg = $('#sendmsg');
   if (!FEEDBACK.reviewer) { msg.textContent = 'Add your name at the top first.'; return; }
@@ -787,8 +862,9 @@ async function submit() {
     msg.innerHTML = '<span class="ok">Sent — thank you.</span> You can keep editing and send again; ' +
       'each submission is kept separately.';
   } catch (e) {
-    msg.innerHTML = 'Could not send (' + esc(e.message) + '). Use <b>Download a copy</b> and ' +
-      'email me the file — nothing is lost.';
+    msg.innerHTML = 'Could not send (' + esc(e.message) + '). Nothing is lost — your answers are ' +
+      'still saved in this browser. Use <b>Email it back</b>' +
+      (FB.contact ? ' (' + esc(FB.contact) + ')' : '') + ' or <b>Download a copy</b>.';
   }
   btn.disabled = false;
 }

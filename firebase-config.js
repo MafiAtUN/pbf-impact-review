@@ -7,4 +7,7 @@ window.FB = {
   apiKey: "",
   projectId: "",
   collection: "feedback",
+  // Where "Email it back" sends to. Works with no Firebase project at all,
+  // and is the fallback the page offers if a Firestore submission fails.
+  contact: "islam50@un.org",
 };

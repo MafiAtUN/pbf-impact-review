@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>How it was made — PBF impact statements</title>
-<meta name="description" content="How 2,252 source documents became 435 evidence-backed impact statements: the pipeline, the checks and the feedback loop.">
+<meta name="description" content="How 2,252 source documents became 435 evidence-backed impact statements: the pipeline, the checks and the feedback loop, with recordings of each tool.">
 <style>
 :root{
   --bg:#f4f3ef; --paper:#fff; --ink:#1c1c19; --muted:#6a6a62; --line:#e0dfd8;
@@ -203,7 +203,45 @@ body.plain .checks small{display:none}
 .take small{display:block;font:14.5px/1.5 var(--sans);color:var(--muted);margin-top:3px}
 footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted);border-top:1px solid var(--line)}
 
+figure{margin:0}
+.gif{margin:18px 0 0;border-radius:12px;overflow:hidden;border:1px solid #33352f;background:#16181b;box-shadow:0 14px 34px rgba(0,0,0,.16);max-width:860px}
+.gif img{display:block;width:100%;height:auto}
+.gif figcaption{font-size:13px;line-height:1.45;color:#a9aaa2;padding:9px 14px 11px;background:#1d1f1c;border-top:1px solid #33352f}
+.gif figcaption b{color:#7fc0a8;font-weight:600}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;counter-reset:f}
+.flow>div{counter-increment:f;background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:16px;position:relative;animation:pulse 8s infinite;animation-delay:calc(var(--k)*2s)}
+.flow>div::before{content:counter(f);font:600 34px/1 var(--serif);color:var(--accent);display:block;margin-bottom:8px}
+.flow.plainnum>div::before{content:none}
+.flow h3{font-size:17px}.flow p{font-size:14.5px;margin:0}
+@keyframes pulse{0%,20%,100%{border-color:var(--line);box-shadow:none}6%,14%{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}}
+.tree{display:grid;gap:8px;margin-top:10px}
+.tree div{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:15px}
+.tree b{font:700 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.rules{columns:2 300px;column-gap:28px;margin:10px 0 0;padding-left:20px;font-size:15px}
+.rules li{margin-bottom:7px;break-inside:avoid}
+.oops .was{font-size:14px;color:var(--muted);border-top:1px dashed var(--line);margin-top:10px;padding-top:8px}
+.oops .was b{color:var(--who)} .oops .was + .was{border-top:0;margin-top:2px;padding-top:0} .oops .was.f b{color:var(--accent)}
+.flags{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+.flags div{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:14.5px;line-height:1.45}
+.flags code{display:inline-block;margin-bottom:4px;color:var(--hum);background:color-mix(in srgb,var(--hum) 13%,transparent);font-weight:600}
+.cal{display:flex;align-items:flex-end;gap:6px;height:170px;margin-top:14px;border-bottom:1px solid var(--line)}
+.cal div{flex:1;background:var(--accent);border-radius:4px 4px 0 0;height:0;transition:height 1.1s cubic-bezier(.2,.7,.2,1);transition-delay:calc(var(--i)*60ms);position:relative;min-width:0}
+.in .cal div{height:var(--h)}
+.cal div span{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font:600 11px var(--mono);color:var(--muted)}
+.call{display:flex;gap:6px;margin-top:5px}.call span{flex:1;font:10.5px var(--mono);color:var(--muted);text-align:center;min-width:0;overflow:hidden;white-space:nowrap}
+@media (max-width:640px){.call span{font-size:0}.call span::before{content:attr(data-s);font-size:9px}}
+details{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:0 16px;margin-bottom:8px}
+summary{cursor:pointer;font-weight:600;padding:13px 0;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::after{content:"+";font:400 22px/1 var(--serif);color:var(--accent);transition:transform .2s}
+details[open] summary::after{transform:rotate(45deg)}
+summary::-webkit-details-marker{display:none}
+details p{font-size:15.5px;padding-bottom:14px;margin:0}
+dl.gl{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px 26px;margin:0}
+dl.gl div{border-top:1px solid var(--line);padding-top:9px}
+dl.gl dt{font-weight:700}dl.gl dd{margin:2px 0 0;font-size:15px;color:var(--muted)}
+h2.sub{font-size:clamp(22px,2.6vw,28px);margin:38px 0 12px}
 @media (prefers-reduced-motion:reduce){
+  .flow>div{animation:none}.cal div{transition:none}
   html{scroll-behavior:auto}
   [data-r]{opacity:1;transform:none;transition:none}
   .el,.types i,.fr .b,.bars i,.fourteen i,.rung,.track div{transition:none}
@@ -230,6 +268,21 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
     <div class="stat"><b data-n="435">0</b><span>drafts delivered</span></div>
   </div>
   <p class="scroll" data-r style="--i:5">Scroll, or use <kbd>←</kbd> <kbd>→</kbd>. The switch at top right hides the technical detail.</p>
+</div>
+</section>
+
+<section id="brief" data-t="In brief">
+<div class="wrap">
+  <p class="kicker" data-r>The 30-second version</p>
+  <h2 data-r>Four steps, repeated 435 times.</h2>
+  <p class="lead" data-r>Code reads. A language model drafts. Code and a second model check. People decide. Nothing reaches a reviewer on the model's say-so alone.</p>
+  <div class="flow" data-r>
+    <div style="--k:0"><h3>Read</h3><p>Every file is opened, converted to text and labelled. Scanned pages are read by OCR.</p><span class="who p" style="margin:8px 0 0;display:inline-block">Python</span></div>
+    <div style="--k:1"><h3>Draft</h3><p>For one project at a time, the model reads all its sources and writes 120 to 200 words under written house rules.</p><span class="who l" style="margin:8px 0 0;display:inline-block">Model</span></div>
+    <div style="--k:2"><h3>Check</h3><p>Rules are enforced by code. Numbers and quotes are matched to the sources. A second model hunts for contradictions.</p><span class="who p" style="margin:8px 0 0;display:inline-block">Python</span><span class="who l">Second model</span></div>
+    <div style="--k:3"><h3>Review</h3><p>The Impact Hub reads each draft with its sources and flags, then approves, rewrites or sends it back. Their comments become new rules.</p><span class="who h" style="margin:8px 0 0;display:inline-block">People</span></div>
+  </div>
+  <p class="small muted" data-r style="margin-top:18px">The rest of this page walks through each step, with short recordings of the tools at work. Recordings use anonymised or invented examples, because the drafts themselves are not public.</p>
 </div>
 </section>
 
@@ -261,6 +314,11 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
       <p class="small muted" style="margin:6px 2px 0">The strength of the evidence decides which of the three a project gets. A weak claim is never stretched into a strong one.</p>
     </div>
   </div>
+  <div class="grid g3" style="margin-top:22px">
+    <div class="card" data-r><h3>Who does what</h3><p>PBSO's Impact Hub owns the method and reviews every draft. A volunteer drafter built and ran the system described here. The model and the code do the reading and first drafting.</p></div>
+    <div class="card" data-r style="--i:1"><h3>What counts as evidence</h3><p>Impact evaluations, final project evaluations, the Secretary-General's reports, portfolio and thematic reviews, and final project reports. A project's own progress reports count for less.</p></div>
+    <div class="card" data-r style="--i:2"><h3>What is never allowed</h3><p>An invented number, date, place or quote. Claiming a project caused a change it only contributed to. Stretching thin evidence into a strong claim.</p></div>
+  </div>
 </div>
 </section>
 
@@ -277,6 +335,12 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
     <div class="card trap" data-r style="--i:3"><span class="n">04</span><h3>The summary contradicts the table</h3><p>One summary claimed a 50% reduction three times. The results table showed 50% was the target. The real movement was 20 to 18.</p><p class="fix"><b>Fix:</b> draft from the results table, not the summary.</p></div>
     <div class="card trap" data-r style="--i:4"><span class="n">05</span><h3>The same file in two folders</h3><p>Cross-border projects are filed once per country. Two copies of one report are not two sources.</p><p class="fix"><b>Fix:</b> fingerprint every file and spot the twins.</p></div>
     <div class="card trap" data-r style="--i:5"><span class="n">06</span><h3>Sources that disagree</h3><p>A progress report, an evaluation and a published summary can give three different figures for one result.</p><p class="fix"><b>Fix:</b> a fixed order of precedence, and a flag every time.</p></div>
+  </div>
+  <div class="stats" data-r style="margin:22px 0 4px">
+    <div class="stat"><b>4</b><span>languages: English, French, Spanish, Portuguese</span></div>
+    <div class="stat"><b>151</b><span>documents that were pictures of pages</span></div>
+    <div class="stat"><b>100s</b><span>of pages in a single project folder</span></div>
+    <div class="stat"><b>3</b><span>ways a PDF can look readable and not be</span></div>
   </div>
   <div class="card" id="dont" data-r>
     <h3>Try one: a French percentage that reads two ways</h3>
@@ -307,10 +371,12 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
       </div></div>
     <div class="step" data-r><span class="dot">2</span><h3>Find out what each file really is</h3><p>Check the file's actual format before trusting its extension, then pull the text with the right tool for that format.</p>
       <div class="chips"><span>file --mime-type</span><span>pdftotext</span><span>docx2txt.py (with tables)</span><span>xlsx2txt.py</span><span>textutil</span></div>
-      <div class="tech"><p>Each file's text is cached under the md5 of its path, so nothing is extracted twice. An early version of the Word extractor dropped every table, which meant the results frameworks of 109 documents had never been read. It was caught, rebuilt, and every affected draft re-checked.</p></div></div>
+      <div class="tech"><p>Each file's text is cached under the md5 of its path, so nothing is extracted twice. An early version of the Word extractor dropped every table, which meant the results frameworks of 109 documents had never been read. It was caught, rebuilt, and every affected draft re-checked.</p><p>Cache keys also depend on how the operating system spells accented file names. macOS hands back one Unicode form and a keyboard types another, which gives two different fingerprints for one file. Paths are always taken from the file system, never typed.</p></div>
+      <figure class="gif" data-r><picture><source srcset="img/sniff.png" media="(prefers-reduced-motion: reduce)"><img src="img/sniff.gif" width="1200" height="700" loading="lazy" alt="Terminal recording: a file named .pdf is rejected by pdfinfo, identified as a spreadsheet by its mime type, and extracted as a workbook."></picture><figcaption><b>Recording.</b> A file with a .pdf name fails as a PDF, is identified as a spreadsheet, and goes to the right extractor.</figcaption></figure></div>
     <div class="step" data-r><span class="dot">3</span><h3>Read the scans</h3><p>151 documents were photographs of pages. Each page is turned into an image and read by OCR in the right language for its country.</p>
       <div class="chips"><span>pdftoppm 300 dpi</span><span>tesseract</span><span>fra+eng · spa+eng · por+eng</span><span>scrambled.py</span></div>
-      <div class="tech"><p>OCR text is treated as lower confidence. Any figure taken from it is checked against the page image and carries an <code>ocr</code> flag. Tick-boxes on scanned forms often cannot be recovered, and the rule is to say so, not to guess.</p></div></div>
+      <div class="tech"><p>OCR text is treated as lower confidence. Any figure taken from it is checked against the page image and carries an <code>ocr</code> flag. Tick-boxes on scanned forms often cannot be recovered, and the rule is to say so, not to guess.</p><p>Screening for scans by "zero text" misses files. Nine had a thin text layer, just a print header and page number, with every answer scanned as an image. The screen that works is characters per page across the whole document.</p></div>
+      <figure class="gif" data-r><picture><source srcset="img/ocr.png" media="(prefers-reduced-motion: reduce)"><img src="img/ocr.gif" width="1200" height="700" loading="lazy" alt="Animation: a scanned French report page is swept by a scan line while its text appears beside it."></picture><figcaption><b>Recording.</b> A page with no usable text is turned into an image and read line by line. The page shown is synthetic.</figcaption></figure></div>
     <div class="step" data-r><span class="dot">4</span><h3>Label every document by type</h3><p>Evaluation, Secretary-General's report, progress report, project document, budget. Decided from the words on the page.</p>
       <div class="chips"><span>classify3.py</span><span>regex on content</span></div></div>
     <div class="step" data-r><span class="dot">5</span><h3>Rank each project by its evidence</h3><p>A project with an independent evaluation can support a statement. One with only its own progress reports gets a story. This became the work plan.</p>
@@ -319,7 +385,8 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
       <div class="chips"><span>sg_language.py</span><span>blurbs.py</span><span>dashboard_narratives.py</span></div>
       <div class="tech"><p>Spreadsheet columns are read by header name, never by position. Guessing by shape was tried first and picked up the wrong cell as a project title in two workbooks.</p></div></div>
     <div class="step" data-r><span class="dot">7</span><h3>Hand the drafter one brief per project</h3><p>Every source in the folder, in order of authority, with the cleared language attached and the known traps for that folder called out.</p>
-      <div class="chips"><span>brief.py &lt;Country&gt; &lt;ProjectID&gt;</span></div></div>
+      <div class="chips"><span>brief.py &lt;Country&gt; &lt;ProjectID&gt;</span></div>
+      <figure class="gif" data-r><picture><source srcset="img/brief.png" media="(prefers-reduced-motion: reduce)"><img src="img/brief.gif" width="1200" height="700" loading="lazy" alt="Terminal recording: the drafting brief lists a project's sources in order of authority, its cleared language and the traps in its folder."></picture><figcaption><b>Recording.</b> The brief for one project: sources ranked by authority, cleared language to read first, and the traps to watch for. Abridged and anonymised.</figcaption></figure></div>
   </div>
 </div>
 </section>
@@ -358,6 +425,33 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
       </div>
     </div>
   </div>
+  <h2 class="sub" data-r>What the model actually produces</h2>
+  <p data-r>One small text file per project. The statement, the sources it used, and a note to the reviewer about anything uncertain or left out.</p>
+  <figure class="gif" data-r><picture><source srcset="img/draft.png" media="(prefers-reduced-motion: reduce)"><img src="img/draft.gif" width="1200" height="700" loading="lazy" alt="Editor recording: a statement file is typed out with its five elements in five colours, followed by its sources and reviewer flags."></picture><figcaption><b>Recording.</b> A draft taking shape. The five colours are the five required elements. The flags at the end go to the reviewer, not into the published text. Invented example, abridged.</figcaption></figure>
+  <div class="split" style="margin-top:30px">
+    <div data-r>
+      <h3>How the product is chosen</h3>
+      <div class="tree">
+        <div><span>Results at outcome level, backed by an evaluation or cleared report language</span><b>Statement</b></div>
+        <div><span>Results at output level, or an outcome claim resting on self-reporting</span><b>Story</b></div>
+        <div><span>Newly approved, no results yet</span><b>Alert</b></div>
+        <div><span>No demonstrable impact for the project as a whole</span><b>Forthcoming</b></div>
+      </div>
+      <p class="small muted" style="margin-top:8px">This is a judgement made on the documents. A project's own "yes, we achieved outcomes" tick-box does not decide it.</p>
+    </div>
+    <div data-r style="--i:2">
+      <h3>The house rules, in short</h3>
+      <ul class="rules" style="columns:1">
+        <li>A news-style heading led by the biggest result</li>
+        <li>Open in the present tense: the challenge usually persists</li>
+        <li>Communities and national institutions are the subject, with the project's contribution visible</li>
+        <li>Every figure gets a sentence saying why it matters</li>
+        <li>Report what was achieved, not how it compares with a target</li>
+        <li>Say where the evidence comes from, and cite every source</li>
+        <li>Never name implementing partners. Never invent anything</li>
+      </ul>
+    </div>
+  </div>
 </div>
 </section>
 
@@ -384,6 +478,7 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
     </ul>
     <div class="tech"><p>When the model is asked to find evidence, it must return sentences verbatim. <code>evidence_digest.py</code> string-matches each one against the source text and silently drops any that do not match, so an invented quote cannot reach a draft by that route. Checks are never loosened to make a draft pass. If a rule is wrong, the rule file is changed and the change is recorded.</p></div>
   </div>
+  <figure class="gif" data-r><picture><source srcset="img/verify.png" media="(prefers-reduced-motion: reduce)"><img src="img/verify.gif" width="1200" height="700" loading="lazy" alt="Terminal recording: the rule checker reports four errors and a warning, the draft is revised, and a second run comes back clean."></picture><figcaption><b>Recording.</b> The rule checker rejects a draft, the draft is revised, and the second run passes. A separate tool then confirms every number exists in the project's documents.</figcaption></figure>
 </div>
 </section>
 
@@ -393,7 +488,8 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
   <p class="kicker" data-r>6 · A second opinion</p>
   <h2 data-r>Then a different model was asked to find the mistakes.</h2>
   <p class="lead" data-r>A model checking its own work tends to agree with itself. So a separate model, from a different maker, compared each draft with the full text of its sources and reported anything that did not match.</p>
-  <div class="split">
+  <figure class="gif" data-r><picture><source srcset="img/qa.png" media="(prefers-reduced-motion: reduce)"><img src="img/qa.gif" width="1200" height="700" loading="lazy" alt="Terminal recording: two findings graded CONTRADICTED are checked against the source. One is a real error, the other a false alarm."></picture><figcaption><b>Recording.</b> Two findings with the same grade. Opened against the source, one is a real error and one is the checker misreading a table. Anonymised from real cases.</figcaption></figure>
+  <div class="split" style="margin-top:26px">
     <div class="card" data-r>
       <div class="funnel">
         <div class="fr"><div class="lbl"><b>299</b>drafts checked against their sources</div><div class="b" style="--w:100%"></div></div>
@@ -419,16 +515,35 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
 </div>
 </section>
 
+<section id="wrong" data-t="What went wrong">
+<div class="wrap">
+  <p class="kicker" data-r>7 · What went wrong</p>
+  <h2 data-r>Six mistakes, and the tool each one left behind.</h2>
+  <p class="lead" data-r>None of this worked first time. Each failure below was found during the work, fixed, and then turned into a check so it could not quietly come back.</p>
+  <div class="grid g3">
+    <div class="card oops" data-r><h3>Cleared language sat unread in the folder</h3><p>The pilot drafted two statements without using official report paragraphs that were in the same folders.</p><p class="was"><b>Cause:</b> the folder was not read end to end.</p><p class="was f"><b>Now:</b> <code>sg_language.py</code> extracts it and the brief puts it first.</p></div>
+    <div class="card oops" data-r style="--i:1"><h3>Only the first three pages were cached</h3><p>Interim figures sit on page 1 and final ones deep inside, so drafts picked up out-of-date numbers.</p><p class="was"><b>Cause:</b> a speed shortcut in extraction.</p><p class="was f"><b>Now:</b> counts are searched across the full document, and QA reads full text.</p></div>
+    <div class="card oops" data-r style="--i:2"><h3>Every table in every Word file was dropped</h3><p>The results frameworks of 109 documents had never been read.</p><p class="was"><b>Cause:</b> the extractor read paragraphs only.</p><p class="was f"><b>Now:</b> rebuilt with tables, and <code>figure_check.py</code> re-tested the affected drafts.</p></div>
+    <div class="card oops" data-r><h3>A report that read as noise</h3><p>A recent report extracted as gibberish, so the draft fell back on an older one and reported old results.</p><p class="was"><b>Cause:</b> a font with no character map.</p><p class="was f"><b>Now:</b> <code>scrambled.py</code> finds such files and sends them to OCR.</p></div>
+    <div class="card oops" data-r style="--i:1"><h3>Titles and figures that matched nothing</h3><p>Three project titles were composed from the subject matter, and two counts appeared in no source at all.</p><p class="was"><b>Cause:</b> the model filling a gap.</p><p class="was f"><b>Now:</b> <code>audit_citations.py</code> and <code>figure_check.py</code> match titles, quotes and numbers to the sources.</p></div>
+    <div class="card oops" data-r style="--i:2"><h3>OCR set to the wrong language</h3><p>Every country outside a short French-speaking list was read as English, which would have garbled Spanish and Portuguese scans.</p><p class="was"><b>Cause:</b> a map written for the first 31 countries.</p><p class="was f"><b>Now:</b> a per-country map covering 28 countries in three languages.</p></div>
+  </div>
+  <p class="small muted" data-r style="margin-top:16px">Re-reading never caught the invented titles. A check did. That is the argument for writing checks.</p>
+</div>
+</section>
+
 <!-- 7 -->
 <section id="fb" data-t="Feedback loop">
 <div class="wrap">
-  <p class="kicker" data-r>7 · The feedback loop</p>
+  <p class="kicker" data-r>8 · The feedback loop</p>
   <h2 data-r>Reviewer feedback became rules, and rules became code.</h2>
   <p class="lead" data-r>Comments from the Impact Hub were not applied draft by draft. Each one was turned into a rule, the rule into an automatic check, and the check was then run over everything already written.</p>
   <div class="cyc" data-r>
     <div id="ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="36" fill="none" stroke="var(--line)" stroke-width=".7"/><circle id="orb" r="1.8" fill="var(--accent)"/></svg><div class="mid">each round makes<br>the next one cheaper</div></div>
     <div id="cap"><h3></h3><p></p><div class="tech"><p></p></div></div>
   </div>
+  <figure class="gif" data-r><picture><source srcset="img/feedback.png" media="(prefers-reduced-motion: reduce)"><img src="img/feedback.gif" width="1200" height="700" loading="lazy" alt="Recording in four steps: a reviewer comment, the rule it becomes, the check that enforces it, and the check run over all drafts."></picture><figcaption><b>Recording.</b> One round-one comment followed all the way through: comment, rule, check, and a re-run over everything already written.</figcaption></figure>
+  <h2 class="sub" data-r>The three rounds</h2>
   <div class="tl">
     <div data-r><time>11 – 13 Aug 2026</time><p><b>Pilot.</b> Five statements, the OCR pipeline and a private review site.</p></div>
     <div data-r><time>18 – 19 Aug · round 1</time><p><b>The house style is rewritten.</b></p><p class="fb">Headings lose their fixed template. Shortfalls leave the text and go to reviewer flags. National actors become the subject. Always look for cleared report language first.</p></div>
@@ -440,10 +555,52 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
 </div>
 </section>
 
+<section id="flags" data-t="Flags">
+<div class="wrap">
+  <p class="kicker" data-r>9 · Flags</p>
+  <h2 data-r>Every draft tells its reviewer where to look.</h2>
+  <p class="lead" data-r>Reviewers asked, more than once, for the system to highlight what it was unsure of. So each draft carries flags from an agreed list of sixteen. They go to the reviewer and never into the published text.</p>
+  <div class="flags" data-r>
+    <div><code>negative</code><br>The sources record shortfalls that were kept out of the text.</div>
+    <div><code>self-reported</code><br>The claim rests only on the project's own reporting.</div>
+    <div><code>inconsistency</code><br>Two sources disagree, or one contradicts itself. Both readings and the documents are named.</div>
+    <div><code>sg-check</code><br>A cleared report passage could not be confirmed as being about this project.</div>
+    <div><code>unverified-pct</code><br>A percentage comes from a survey whose method or sample is not in the folder.</div>
+    <div><code>source-note</code><br>An evaluation table repeats the project's monitoring data, not the evaluators' own fieldwork.</div>
+    <div><code>translation</code><br>A quote or key phrase was translated. The original is given.</div>
+    <div><code>dont-pct</code><br>A figure comes from the French additive percentage form.</div>
+    <div><code>ocr</code><br>A figure was read from a scanned page and should be checked against the image.</div>
+    <div><code>checkbox</code><br>A tick-box answer on a scanned form cannot be recovered.</div>
+    <div><code>unreadable</code><br>A document cannot be read at all. Its name is recorded.</div>
+    <div><code>missing-source</code><br>A document the evidence depends on is not in the folder.</div>
+    <div><code>cross-filed</code><br>The same document sits in another project's folder, so it is one source, not two.</div>
+    <div><code>report-type</code><br>Annual, semi-annual or final cannot be told from the document.</div>
+    <div><code>short-code</code><br>The project's official short code could not be found.</div>
+    <div><code>spelling</code><br>A place name is spelled differently across sources. One was chosen.</div>
+  </div>
+  <div class="tech" data-r><p><code>unreadable</code> and <code>spelling</code> were added on a reviewer's ruling in November. The list lives in <code>drafting-rules.md</code> and in <code>verify.py</code>, which rejects any flag not on it and requires a flag about a conflict to name the document the conflict sits in.</p></div>
+</div>
+</section>
+
+<section id="site" data-t="Review site">
+<div class="wrap">
+  <p class="kicker" data-r>10 · Collecting the feedback</p>
+  <h2 data-r>A private review site with no server behind it.</h2>
+  <p class="lead" data-r>Reviewing 435 drafts in a Word file is slow. So the drafts were also published as a small private website where reviewers can search, filter by country on a map, read each draft beside its sources and flags, and record a verdict.</p>
+  <div class="flow plainnum" data-r>
+    <div style="--k:0"><h3>Access key</h3><p>Typed by the reviewer. Sent separately from the link. Never leaves the browser.</p></div>
+    <div style="--k:1"><h3>Key stretching</h3><p>The browser turns it into an encryption key, slowly on purpose, so guessing is impractical.</p></div>
+    <div style="--k:2"><h3>Decrypt</h3><p>The page downloads one encrypted file and unlocks it locally.</p></div>
+    <div style="--k:3"><h3>Review</h3><p>Verdicts and comments save as the reviewer goes and come back as a file or a submission.</p></div>
+  </div>
+  <div class="tech" data-r><p>Hosted on GitHub Pages, which only serves public repositories on a free account. So the repository holds ciphertext only: AES-256-GCM, with the key derived by PBKDF2-SHA256 at 600,000 iterations and a random salt, all through the browser's Web Crypto API. Map outlines are baked into the encrypted file at build time, so the page fetches nothing else and works behind a firewall. <code>build_review_site.py</code> regenerates it and can rotate the key.</p></div>
+</div>
+</section>
+
 <!-- 8 -->
 <section id="out" data-t="What came out">
 <div class="wrap">
-  <p class="kicker" data-r>8 · What came out</p>
+  <p class="kicker" data-r>11 · What came out</p>
   <h2 data-r>435 drafts, each with its sources and its doubts attached.</h2>
   <p class="lead" data-r>Published text carries the results. A separate note to the reviewer carries everything uncertain, so nothing is hidden and nothing is overclaimed.</p>
   <div class="split">
@@ -467,10 +624,51 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
     </div>
     <div class="grid" style="gap:10px;--i:2" data-r>
       <div class="card"><h3>A Word document</h3><p>All drafts in the reviewers' order, with and without flags.</p><div class="chips"><span>make_statements_docx.py</span></div></div>
-      <div class="card"><h3>A private review site</h3><p>Search, filter by country on a map, read the sources, record a verdict on each draft.</p><div class="tech"><p>A static page on GitHub Pages. The content is AES-256-GCM ciphertext, unlocked in the browser with a key derived by PBKDF2 (600,000 rounds). No server, no plaintext in the repository.</p></div></div>
+      <div class="card"><h3>A private review site</h3><p>Search, filter by country on a map, read the sources, record a verdict on each draft.</p><div class="chips"><span>build_review_site.py</span><span>Web Crypto</span></div></div>
       <div class="card"><h3>A Power BI showcase</h3><p>Overview, evidence and stories pages, generated entirely from code.</p><div class="chips"><span>Deneb / Vega-Lite</span><span>Fabric API</span></div></div>
     </div>
   </div>
+</div>
+</section>
+
+<section id="work" data-t="The effort">
+<div class="wrap">
+  <p class="kicker" data-r>12 · The effort</p>
+  <h2 data-r>Three months, 329 saved steps.</h2>
+  <p class="lead" data-r>Every change to a draft, a rule or a tool was saved with a note saying why. The record shows short bursts of drafting separated by waits for feedback, which is how the loop is meant to run.</p>
+  <div class="card" data-r>
+    <h3>Saved changes per working day, August to November 2026</h3>
+    <div class="cal"><div style="--h:1.5%;--i:0"><span>2</span></div><div style="--h:1.5%;--i:1"><span>2</span></div><div style="--h:1.5%;--i:2"><span>1</span></div><div style="--h:35.1%;--i:3"><span>51</span></div><div style="--h:88.0%;--i:4"><span>128</span></div><div style="--h:8.2%;--i:5"><span>12</span></div><div style="--h:6.9%;--i:6"><span>10</span></div><div style="--h:24.1%;--i:7"><span>35</span></div><div style="--h:11.0%;--i:8"><span>16</span></div><div style="--h:5.5%;--i:9"><span>8</span></div><div style="--h:8.2%;--i:10"><span>12</span></div><div style="--h:3.4%;--i:11"><span>5</span></div><div style="--h:25.4%;--i:12"><span>37</span></div><div style="--h:6.9%;--i:13"><span>10</span></div></div>
+    <div class="call"><span data-s="11">11 Aug</span><span data-s="12">12 Aug</span><span data-s="13">13 Aug</span><span data-s="4">4 Sep</span><span data-s="5">5 Sep</span><span data-s="18">18 Sep</span><span data-s="8">8 Oct</span><span data-s="2">2 Nov</span><span data-s="3">3 Nov</span><span data-s="4">4 Nov</span><span data-s="6">6 Nov</span><span data-s="8">8 Nov</span><span data-s="9">9 Nov</span><span data-s="10">10 Nov</span></div>
+    <p class="small muted" style="margin-top:12px">August: pilot. Early September: rules rewritten after round one and drafting at scale. November: round-two rewrites, the QA pass, and the last projects.</p>
+  </div>
+  <div class="tech" data-r><p>Git history doubles as the audit trail. A reviewer asking "why does this draft say 411 and not 360" can be answered from the commit that changed it and the flag that explains it.</p></div>
+</div>
+</section>
+
+<section id="faq" data-t="Questions">
+<div class="wrap">
+  <p class="kicker" data-r>Questions people ask</p>
+  <h2 data-r>Plain answers.</h2>
+  <div data-r>
+    <details><summary>Did AI write these statements?</summary><p>It wrote the drafts. The method, the house style and every ruling came from PBSO's Impact Hub, and every draft goes to them marked as a draft, with its sources and its doubts attached. Nothing is published on the model's authority.</p></details>
+    <details><summary>Can the model make things up?</summary><p>Yes, and during this work it did: two counts and three project titles matched nothing in the sources. That is why no claim rests on the model alone. Quotes and titles are matched to the source text by code, numbers are looked up in the project's documents, a second model searches for contradictions, and a person opens the source before anything is changed.</p></details>
+    <details><summary>Why use two different models?</summary><p>A model reviewing its own draft shares its own blind spots. A model from a different maker, given the full source text and asked only to find contradictions, disagrees more usefully. It is also wrong often, which is why its findings are checked and never applied automatically.</p></details>
+    <details><summary>What happens when two sources disagree?</summary><p>There is a fixed order of authority. An evaluation outranks a published report, which outranks a project's own reporting. Where the rule does not settle it, neither figure is published and the reviewer gets a flag naming both documents.</p></details>
+    <details><summary>Why are shortfalls left out of the statements?</summary><p>That is the reviewers' rule: the published text carries the results a project achieved. Shortfalls and unmet targets are not dropped. They go into a flag for the reviewer on every draft where they exist, which is 397 of 435.</p></details>
+    <details><summary>Could this be reused for another fund or portfolio?</summary><p>Most of it. The reading pipeline, the checks and the review site are general. What is specific to this fund is the rule file, the list of flags and the order of authority between sources, and those are plain text files meant to be edited.</p></details>
+  </div>
+  <h2 class="sub" data-r>Words used on this page</h2>
+  <dl class="gl" data-r>
+    <div><dt>Language model</dt><dd>Software that reads and writes text. Here it reads sources and drafts statements.</dd></div>
+    <div><dt>OCR</dt><dd>Reading the text out of a picture of a page.</dd></div>
+    <div><dt>Fingerprint (hash)</dt><dd>A short code computed from a file. Identical files give identical codes.</dd></div>
+    <div><dt>Cleared language</dt><dd>Wording that has already been through official approval, such as a Secretary-General's report.</dd></div>
+    <div><dt>Outcome and output</dt><dd>An output is what a project delivered. An outcome is what changed because of it.</dd></div>
+    <div><dt>Results framework</dt><dd>The table in a report listing each indicator with its baseline, target and result.</dd></div>
+    <div><dt>Flag</dt><dd>A short note to the reviewer about something uncertain in a draft.</dd></div>
+    <div><dt>Commit</dt><dd>One saved change, with a note explaining it.</dd></div>
+  </dl>
 </div>
 </section>
 
@@ -483,7 +681,7 @@ footer{padding:28px 16px 60px;text-align:center;font-size:13px;color:var(--muted
     <li data-r>Make the documents readable before anything else.<small>Most early mistakes were reading problems, not writing problems.</small></li>
     <li data-r>Write the rules down, then make code enforce them.<small>A rule in a file can be checked 435 times. A rule in someone's head cannot.</small></li>
     <li data-r>Let the model draft. Do not let it certify.<small>Every figure had to survive a check that did not depend on the model that wrote it.</small></li>
-    <li data-r>Treat every automated finding as a lead.<small>Two thirds of the first batch were false alarms. The other third mattered.</small></li>
+    <li data-r>Treat every automated finding as a lead.<small>About two thirds of the first batch were false alarms. The other third mattered.</small></li>
     <li data-r>Say what you are unsure of.<small>The flags turned reviewers' time towards the places where a human decision was really needed.</small></li>
   </ol>
   <div class="tech" data-r style="margin-top:28px"><p><b>The stack:</b> Python 3 (29 scripts, about 6,000 lines) · poppler (<code>pdftotext</code>, <code>pdftoppm</code>) · Tesseract OCR · Claude via Claude Code for drafting · a GPT model on Azure AI Foundry for independent QA · Git · GitHub Pages with Web Crypto · Power BI with Deneb.</p></div>
